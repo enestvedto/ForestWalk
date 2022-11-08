@@ -1,18 +1,23 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
 
 
 // Declare variables 
-
+let scene;
+let camera;
+let ambientLight;
+let orbitControls;
+let renderer;
 
 /**
  * Startup Function
  */
 function main() {
     initGraphics();
-    loop();
+    render();
 } //end of main
 
 
@@ -20,50 +25,36 @@ function main() {
  * builds the view the user will see
  */
 function initGraphics() {
-    /*
-        //Scene
-    
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000);
-    
-        //Camera
-    
-        camera = new THREE.PerspectiveCamera(90, gameCanvas.clientWidth / gameCanvas.clientHeight, 0.1, 1000);
-        camera.name = 'camera';
-        camera.position.z = 0.5;
-        camera.position.y = 0.5;
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-    
-        scene.add(camera);
-    
-        //Lighting
-    
-        ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-        scene.add(ambientLight);
-    
-        // Orbit controls
-    
-        orbitControls = new OrbitControls(camera, document.body);
-    
-        //Renderer
-    
-        renderer = new THREE.WebGLRenderer({
-            canvas: gameCanvas,
-        });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(gameCanvas.clientWidth, gameCanvas.clientHeight);
-        */
+
+    //Scene
+    scene = new THREE.Scene();
+
+
+    //Camera
+    camera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
+    camera.name = 'camera';
+    camera.position.set(0, 15, 75);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    scene.add(camera);
+
+    //Lighting
+    ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    scene.add(ambientLight);
+
+
+    // Orbit controls
+    orbitControls = new OrbitControls(camera, document.body);
+
+
+    //Renderer
+    renderer = new THREE.WebGLRenderer({
+        canvas: walkCanvas,
+    });
+    renderer.setClearColor(0xffffff);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
+
 } //end of initGraphics
-
-
-/**
- * This is where the game and its events occur
- */
-function loop() {
-    render();
-    orbitControls.update();
-    window.requestAnimationFrame(loop);
-} //end of loop
 
 
 /**
@@ -72,6 +63,9 @@ function loop() {
  */
 function render() {
     renderer.render(scene, camera);
+    orbitControls.update();
+    window.requestAnimationFrame(render);
 } //end of render
 
-//main();
+
+main();

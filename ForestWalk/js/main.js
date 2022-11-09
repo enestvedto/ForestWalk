@@ -1,9 +1,9 @@
+import '../style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
-
 
 // Declare variables 
 let scene;
@@ -55,13 +55,15 @@ function initGraphics() {
     renderer = new THREE.WebGLRenderer({
         canvas: walkCanvas,
     });
-    renderer.setClearColor(0xffffff);
+    renderer.setClearColor(0x000000);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
 
 
     // initialize terrain
     initTerrain();
+
+    console.log(scene);
 
 } //end of initGraphics
 
@@ -231,16 +233,15 @@ function initTerrain() {
     smoothMap = heightMap;
 
     smoothTerrain(0);
-    console.log(smoothMap);
 
     // now turn into geometry
     textureLoader = new THREE.TextureLoader();
     const geometry = new THREE.PlaneGeometry(30, 30, 32, 32);
     geometry.rotateX(Math.PI * -0.5);
-    const material = new THREE.MeshStandardMaterial({
+    const material = new THREE.MeshBasicMaterial({
         color: 0xFFFFFF
     });
-    const grass = new THREE.MeshStandardMaterial({
+    const grass = new THREE.MeshBasicMaterial({
         map: textureLoader.load('assets/terrain.jpeg'),
     });
     const materials = [
@@ -260,8 +261,8 @@ function initTerrain() {
         });
     });
 
-    for (let w = 0; w < plane.geometry.vertices.length; w++) {
-        plane.geometry.vertices[w].y = verts[w] * .1;
+    for (let w = 0; w < plane.geometry.attributes.position.array.length; w++) {
+        plane.geometry.attributes.position.array[(w * 3) + 2] = verts[w] * .1;
     }
 
     scene.add(plane);

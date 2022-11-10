@@ -55,7 +55,7 @@ function initGraphics() {
     renderer = new THREE.WebGLRenderer({
         canvas: walkCanvas,
     });
-    renderer.setClearColor(0x000000);
+    renderer.setClearColor(0xffffff);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
 

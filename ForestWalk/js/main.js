@@ -38,7 +38,7 @@ function initGraphics() {
     //Camera
     camera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
     camera.name = 'camera';
-    camera.position.set(0, 15, 75);
+    camera.position.set(0, 200, -25);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
@@ -230,43 +230,54 @@ function initTerrain() {
     //smoothing technique
     smoothMap = heightMap;
 
-    smoothTerrain(0);
-    console.log(smoothMap);
+    smoothTerrain(2);
 
     // now turn into geometry
     textureLoader = new THREE.TextureLoader();
-    const geometry = new THREE.PlaneGeometry(30, 30, 32, 32);
-    geometry.rotateX(Math.PI * -0.5);
-    const material = new THREE.MeshStandardMaterial({
-        color: 0xFFFFFF
-    });
-    const grass = new THREE.MeshStandardMaterial({
-        map: textureLoader.load('assets/terrain.jpeg'),
-    });
-    const materials = [
-        grass,
-        material,
-        material,
-        material,
-        material,
-        material,
-    ];
-    const plane = new THREE.Mesh(geometry, materials);
+    var geometry = new THREE.BufferGeometry();
+    var vertices = [];
 
-    const verts = [];
-    smoothMap.forEach(element => {
-        element.forEach(e => {
-            verts.push(e);
-        });
-    });
+    for (let j = 0; j < width - 1; j++) {
+        for (let i = 0; i < width - 1; i++) {
+            // bottom right triangle
+            // point 1
+            vertices.push(i);
+            vertices.push(j);
+            vertices.push(smoothMap[i][j]);
+            // point 2
+            vertices.push(i + 1);
+            vertices.push(j);
+            vertices.push(smoothMap[i + 1][j]);
+            // point 3
+            vertices.push(i + 1);
+            vertices.push(j + 1);
+            vertices.push(smoothMap[i + 1][j + 1]);
 
-    for (let w = 0; w < plane.geometry.vertices.length; w++) {
-        plane.geometry.vertices[w].y = verts[w] * .1;
+            // top left triangle
+            // point 1
+            vertices.push(i);
+            vertices.push(j);
+            vertices.push(smoothMap[i][j]);
+            // point 2
+            vertices.push(i + 1);
+            vertices.push(j + 1);
+            vertices.push(smoothMap[i + 1][j + 1]);
+            // point 3
+            vertices.push(i);
+            vertices.push(j + 1);
+            vertices.push(smoothMap[i][j + 1]);
+        }
     }
 
-    scene.add(plane);
-}
+    geometry.setAttribute('position',
+        new THREE.BufferAttribute(new Float32Array(vertices), 3));
+    var grass = new THREE.MeshStandardMaterial({
+        map: textureLoader.load('assets/terrain.jpeg'),
+    });
+    var mesh = new THREE.Mesh(geometry, grass);
+    scene.add(mesh);
 
+}
 
 /**
  * A basic render method, in case special steps

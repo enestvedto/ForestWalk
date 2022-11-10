@@ -11,7 +11,7 @@ let camera;
 let ambientLight;
 let orbitControls;
 let renderer;
-let width = 33;
+let width = 65;
 let heightMap;
 let smoothMap;
 let textureLoader;
@@ -208,31 +208,46 @@ function initTerrain() {
     // top left
     heightMap[0][0] = 0;
     // bottom left
-    heightMap[0][32] = 0;
+    heightMap[0][64] = 0;
     // top right
-    heightMap[32][0] = 0;
+    heightMap[64][0] = 0;
     // bottom right
-    heightMap[32][32] = 0;
+    heightMap[64][64] = 0;
 
     // set a center and other chosen height values
-    heightMap[16][16] = 75;
+    heightMap[32][32] = 25;
 
     // make a hill in the corner
-    heightMap[3][3] = 50;
-    heightMap[2][3] = 50;
-    heightMap[4][3] = 50;
-    heightMap[3][4] = 50;
-    heightMap[3][2] = 50;
-    heightMap[4][4] = 50;
+    heightMap[4][4] = 25;
 
-    heightField(0, 32, 0, 32);
+    // make a valley
+
+    heightField(0, 64, 0, 64);
 
     //smoothing technique
     smoothMap = heightMap;
 
-    smoothTerrain(2);
+    smoothTerrain(5);
 
     // now turn into geometry
+    for (var i = 0; i < smoothMap.length; i++) {
+        var map = smoothMap[i];
+        for (var j = 0; j < map.length; j++) {
+            if (i == 0) {
+                smoothMap[i][j] = 0;
+            }
+            if (i == width - 1) {
+                smoothMap[i][j] = 0;
+            }
+            if (j == 0) {
+                smoothMap[i][j] = 0;
+            }
+            if (j == width - 1) {
+                smoothMap[i][j] = 0;
+            }
+        }
+    }
+
     textureLoader = new THREE.TextureLoader();
     var geometry = new THREE.BufferGeometry();
     var vertices = [];
@@ -281,6 +296,9 @@ function initTerrain() {
             uvs.push((j + 1) / (width - 1));
         }
     }
+
+
+
 
     geometry.setAttribute('position',
         new THREE.BufferAttribute(new Float32Array(vertices), 3));

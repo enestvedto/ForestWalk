@@ -62,9 +62,6 @@ function initGraphics() {
 
     // initialize terrain
     initTerrain();
-
-    console.log(scene);
-
 } //end of initGraphics
 
 
@@ -91,10 +88,11 @@ function heightField(topRow, bottomRow, leftColumn, rightColumn) {
         centerHeight = heightMap[centerColumnIdx][centerRowIdx];
     }
 
-    var topMid = heightMap[centerColumnIdx][topRow] = ((topLeft + topRight) / 2);
-    var bottomMid = heightMap[centerColumnIdx][bottomRow] = ((bottomLeft + bottomRight) / 2);
-    var leftMid = heightMap[leftColumn][centerRowIdx] = ((topLeft + bottomLeft) / 2);
-    var rightMid = heightMap[rightColumn][centerRowIdx] = ((topRight + bottomRight) / 2);
+    // set mid values to serve as corners when recursing
+    heightMap[centerColumnIdx][topRow] = ((topLeft + topRight) / 2);
+    heightMap[centerColumnIdx][bottomRow] = ((bottomLeft + bottomRight) / 2);
+    heightMap[leftColumn][centerRowIdx] = ((topLeft + bottomLeft) / 2);
+    heightMap[rightColumn][centerRowIdx] = ((topRight + bottomRight) / 2);
 
     // call recursively on matrix for all 4 corners
     // top left
@@ -238,6 +236,7 @@ function initTerrain() {
     textureLoader = new THREE.TextureLoader();
     var geometry = new THREE.BufferGeometry();
     var vertices = [];
+    var uvs = [];
 
     for (let j = 0; j < width - 1; j++) {
         for (let i = 0; i < width - 1; i++) {
@@ -246,36 +245,52 @@ function initTerrain() {
             vertices.push(i);
             vertices.push(j);
             vertices.push(smoothMap[i][j]);
+            uvs.push(i / (width - 1));
+            uvs.push(j / (width - 1));
             // point 2
             vertices.push(i + 1);
             vertices.push(j);
             vertices.push(smoothMap[i + 1][j]);
+            uvs.push((i + 1) / (width - 1));
+            uvs.push(j / (width - 1));
             // point 3
             vertices.push(i + 1);
             vertices.push(j + 1);
             vertices.push(smoothMap[i + 1][j + 1]);
+            uvs.push((i + 1) / (width - 1));
+            uvs.push((j + 1) / (width - 1));
 
             // top left triangle
             // point 1
             vertices.push(i);
             vertices.push(j);
             vertices.push(smoothMap[i][j]);
+            uvs.push(i / (width - 1));
+            uvs.push(j / (width - 1));
             // point 2
             vertices.push(i + 1);
             vertices.push(j + 1);
             vertices.push(smoothMap[i + 1][j + 1]);
+            uvs.push((i + 1) / (width - 1));
+            uvs.push((j + 1) / (width - 1));
             // point 3
             vertices.push(i);
             vertices.push(j + 1);
             vertices.push(smoothMap[i][j + 1]);
+            uvs.push(i / (width - 1));
+            uvs.push((j + 1) / (width - 1));
         }
     }
 
     geometry.setAttribute('position',
         new THREE.BufferAttribute(new Float32Array(vertices), 3));
+    geometry.setAttribute('uv',
+        new THREE.BufferAttribute(new Float32Array(uvs), 2));
+
     var grass = new THREE.MeshStandardMaterial({
-        map: textureLoader.load('assets/terrain.jpeg'),
+        map: textureLoader.load('assets/dirt.jpeg'),
     });
+    geometry.computeVertexNormals();
     var mesh = new THREE.Mesh(geometry, grass);
     scene.add(mesh);
 

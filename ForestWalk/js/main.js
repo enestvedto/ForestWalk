@@ -90,9 +90,15 @@ function initGraphics() {
     // clock
     clock = new THREE.Clock();
 
-
     // initialize terrain
     initTerrain();
+
+    // circle reticle
+    const geometry = new THREE.SphereGeometry(0.0005, 32, 16);
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const sphere = new THREE.Mesh(geometry, material);
+    camera.add(sphere);
+    sphere.position.set(0, 0, -.2);
 } //end of initGraphics
 
 
@@ -358,3 +364,10 @@ function render() {
 
 
 main();
+
+
+
+// reticle
+// random terrain
+// walking
+// repeat texture

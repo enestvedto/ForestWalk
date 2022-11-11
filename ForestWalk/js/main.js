@@ -11,7 +11,7 @@ let camera;
 let ambientLight;
 let orbitControls;
 let renderer;
-let width = 65;
+let width = 129;
 let heightMap;
 let smoothMap;
 let textureLoader;
@@ -208,26 +208,21 @@ function initTerrain() {
     // top left
     heightMap[0][0] = 0;
     // bottom left
-    heightMap[0][64] = 0;
+    heightMap[0][width - 1] = 0;
     // top right
-    heightMap[64][0] = 0;
+    heightMap[width - 1][0] = 0;
     // bottom right
-    heightMap[64][64] = 0;
+    heightMap[width - 1][width - 1] = 0;
 
     // set a center and other chosen height values
-    heightMap[32][32] = 25;
+    heightMap[(width - 1) / 2][(width - 1) / 2] = 25;
 
-    // make a hill in the corner
-    heightMap[4][4] = 25;
-
-    // make a valley
-
-    heightField(0, 64, 0, 64);
+    heightField(0, width - 1, 0, width - 1);
 
     //smoothing technique
     smoothMap = heightMap;
 
-    smoothTerrain(5);
+    smoothTerrain(0);
 
     // now turn into geometry
     for (var i = 0; i < smoothMap.length; i++) {

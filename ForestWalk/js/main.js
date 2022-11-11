@@ -38,10 +38,15 @@ function initGraphics() {
     scene = new THREE.Scene();
 
 
+    // reticle
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+
+
     //Camera
     camera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
     camera.name = 'camera';
-    camera.position.set(0, 0, 0);
+    camera.position.z = 10;
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
@@ -326,6 +331,9 @@ function initTerrain() {
     geometry.computeVertexNormals();
     var mesh = new THREE.Mesh(geometry, grass);
     scene.add(mesh);
+
+    // flip the terrain rightside up
+    mesh.rotation.set(-Math.PI / 2, 0, 0)
 
 } // end of initTerrain
 

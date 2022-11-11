@@ -18,6 +18,7 @@ let heightMap;
 let smoothMap;
 let textureLoader;
 let flycontrols;
+let move;
 
 
 /**
@@ -67,11 +68,13 @@ function initGraphics() {
     controls.addEventListener('lock', function () {
         instructions.style.display = 'none';
         blocker.style.display = 'none';
+        move = true;
     });
 
     controls.addEventListener('unlock', function () {
         blocker.style.display = 'block';
         instructions.style.display = '';
+        move = false;
     });
     flycontrols = new FlyControls(camera, document.body);
     flycontrols.movementSpeed = 15;
@@ -346,7 +349,9 @@ function initTerrain() {
  */
 function render() {
     const deltaTime = clock.getDelta();
-    flycontrols.update(deltaTime * .5);
+    if (move) {
+        flycontrols.update(deltaTime * .5);
+    }
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);
 } //end of render

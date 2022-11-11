@@ -57,6 +57,7 @@ function initGraphics() {
 
     // controls
     controls = new PointerLockControls(camera, document.body);
+    controls.pointerSpeed = 0.5;
     let instructions = document.getElementById('instructions');
     let blocker = document.getElementById('blocker');
     instructions.addEventListener('click', function () {
@@ -73,7 +74,6 @@ function initGraphics() {
         instructions.style.display = '';
     });
     flycontrols = new FlyControls(camera, document.body);
-
     flycontrols.movementSpeed = 15;
 
     //Renderer
@@ -334,6 +334,7 @@ function initTerrain() {
 
     // flip the terrain rightside up
     mesh.rotation.set(-Math.PI / 2, 0, 0)
+    mesh.translateX(-width / 2);
 
 } // end of initTerrain
 

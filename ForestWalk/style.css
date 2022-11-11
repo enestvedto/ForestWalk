@@ -2,3 +2,32 @@
   width: 100%;
   height: 100%;
 }
+
+#blocker {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#instructions {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  font-size: 14px;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+}
+
+#collision {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(222, 103, 103, 0.5);
+}

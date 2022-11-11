@@ -1,20 +1,23 @@
 import '../style.css';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { FlyControls } from 'three/addons/controls/FlyControls.js';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
 
 // Declare variables 
 let scene;
+let clock;
 let camera;
 let ambientLight;
-let orbitControls;
+let controls;
 let renderer;
 let width = 129;
 let heightMap;
 let smoothMap;
 let textureLoader;
+let flycontrols;
 
 
 /**
@@ -38,7 +41,7 @@ function initGraphics() {
     //Camera
     camera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
     camera.name = 'camera';
-    camera.position.set(0, 200, -25);
+    camera.position.set(0, 0, 0);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
@@ -47,9 +50,26 @@ function initGraphics() {
     scene.add(ambientLight);
 
 
-    // Orbit controls
-    orbitControls = new OrbitControls(camera, document.body);
+    // controls
+    controls = new PointerLockControls(camera, document.body);
+    let instructions = document.getElementById('instructions');
+    let blocker = document.getElementById('blocker');
+    instructions.addEventListener('click', function () {
+        controls.lock();
+    });
 
+    controls.addEventListener('lock', function () {
+        instructions.style.display = 'none';
+        blocker.style.display = 'none';
+    });
+
+    controls.addEventListener('unlock', function () {
+        blocker.style.display = 'block';
+        instructions.style.display = '';
+    });
+    flycontrols = new FlyControls(camera, document.body);
+
+    flycontrols.movementSpeed = 15;
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -58,6 +78,9 @@ function initGraphics() {
     renderer.setClearColor(0xffffff);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
+
+    // clock
+    clock = new THREE.Clock();
 
 
     // initialize terrain
@@ -292,9 +315,6 @@ function initTerrain() {
         }
     }
 
-
-
-
     geometry.setAttribute('position',
         new THREE.BufferAttribute(new Float32Array(vertices), 3));
     geometry.setAttribute('uv',
@@ -307,15 +327,18 @@ function initTerrain() {
     var mesh = new THREE.Mesh(geometry, grass);
     scene.add(mesh);
 
-}
+} // end of initTerrain
+
+
 
 /**
  * A basic render method, in case special steps
  * must be taken during a single render.
  */
 function render() {
+    const deltaTime = clock.getDelta();
+    flycontrols.update(deltaTime * .5);
     renderer.render(scene, camera);
-    orbitControls.update();
     window.requestAnimationFrame(render);
 } //end of render
 

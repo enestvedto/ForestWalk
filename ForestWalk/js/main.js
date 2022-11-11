@@ -145,6 +145,24 @@ function heightField(topRow, bottomRow, leftColumn, rightColumn) {
 
 // function to smooth a generated terrain
 function smoothField() {
+    // make sure every edge of the terrain is on y level of 0
+    for (var i = 0; i < smoothMap.length; i++) {
+        var map = smoothMap[i];
+        for (var j = 0; j < map.length; j++) {
+            if (i == 0) {
+                smoothMap[i][j] = 0;
+            }
+            if (i == width - 1) {
+                smoothMap[i][j] = 0;
+            }
+            if (j == 0) {
+                smoothMap[i][j] = 0;
+            }
+            if (j == width - 1) {
+                smoothMap[i][j] = 0;
+            }
+        }
+    }
     var tmp = new Array(width);
     for (let i = 0; i < tmp.length; i++) {
         tmp[i] = new Array(width);
@@ -251,17 +269,28 @@ function initTerrain() {
     // bottom right
     heightMap[width - 1][width - 1] = 0;
 
-    // set a center and other chosen height values
-    heightMap[(width - 1) / 2][(width - 1) / 2] = 25;
+    // set a random center height
+    var centerHeight = getRndInteger(0, 15);
+    heightMap[(width - 1) / 2][(width - 1) / 2] = centerHeight;
+    console.log(centerHeight);
 
+    // set random hills and valleys around the terrain
+    // now turn into geometry
+    for (var i = 10; i < heightMap.length - 10; i += 3) {
+        var map = heightMap[i];
+        for (var j = 10; j < map.length - 10; j += 3) {
+            map[j] = getRndInteger(0, 15);
+        }
+    }
+
+    // call function to automatically populate the rest of the height array
     heightField(0, width - 1, 0, width - 1);
 
     //smoothing technique
     smoothMap = heightMap;
+    smoothTerrain(10);
 
-    smoothTerrain(0);
-
-    // now turn into geometry
+    // make sure every edge of the terrain is on y level of 0
     for (var i = 0; i < smoothMap.length; i++) {
         var map = smoothMap[i];
         for (var j = 0; j < map.length; j++) {
@@ -279,7 +308,9 @@ function initTerrain() {
             }
         }
     }
+    smoothTerrain(5);
 
+    // now turn into geometry
     textureLoader = new THREE.TextureLoader();
     var geometry = new THREE.BufferGeometry();
     var vertices = [];
@@ -368,9 +399,14 @@ function render() {
 } //end of render
 
 
+// returns a random number between min and max (both included):
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+} // end getRndInteger
+
+
 main();
 
 
-// repeat texture
 // random terrain
 // walking

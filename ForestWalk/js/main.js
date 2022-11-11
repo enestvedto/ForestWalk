@@ -334,8 +334,13 @@ function initTerrain() {
     geometry.setAttribute('uv',
         new THREE.BufferAttribute(new Float32Array(uvs), 2));
 
+    const dirtTexture = textureLoader.load('assets/dirt.jpeg', function (dirtTexture) {
+        dirtTexture.wrapS = dirtTexture.wrapT = THREE.RepeatWrapping;
+        dirtTexture.repeat.set(width, width);
+    });
+
     var grass = new THREE.MeshStandardMaterial({
-        map: textureLoader.load('assets/dirt.jpeg'),
+        map: dirtTexture,
     });
     geometry.computeVertexNormals();
     var mesh = new THREE.Mesh(geometry, grass);
@@ -366,8 +371,6 @@ function render() {
 main();
 
 
-
-// reticle
+// repeat texture
 // random terrain
 // walking
-// repeat texture

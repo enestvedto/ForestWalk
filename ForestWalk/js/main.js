@@ -22,6 +22,8 @@ let move;
 let distance;
 let raycaster;
 let groundTerrain;
+let reticle;
+let flashLight;
 
 
 /**
@@ -67,6 +69,11 @@ function initGraphics() {
     scene.add(directionalLight);
     scene.add(directionalLight.target);
 
+    // flashlight
+    const flashlight = new THREE.SpotLight(0xffffff, 3, 40, Math.PI / 10, 0.75, 2);
+    camera.add(flashlight);
+    flashlight.position.set(0, 0, 1);
+    flashlight.target = camera;
 
     // controls
     controls = new PointerLockControls(camera, document.body);
@@ -109,9 +116,9 @@ function initGraphics() {
     // circle reticle
     const geometry = new THREE.SphereGeometry(0.0005, 32, 16);
     const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const sphere = new THREE.Mesh(geometry, material);
-    camera.add(sphere);
-    sphere.position.set(0, 0, -.2);
+    reticle = new THREE.Mesh(geometry, material);
+    camera.add(reticle);
+    reticle.position.set(0, 0, -.2);
 } //end of initGraphics
 
 
@@ -285,7 +292,6 @@ function initTerrain() {
     // set a random center height
     var centerHeight = getRndInteger(0, 15);
     heightMap[(width - 1) / 2][(width - 1) / 2] = centerHeight;
-    console.log(centerHeight);
 
     // set random hills and valleys around the terrain
     // now turn into geometry
@@ -398,8 +404,6 @@ function initTerrain() {
 
     // "walk" on top of the terrain
     raycaster = new THREE.Raycaster();
-
-
 } // end of initTerrain
 
 
@@ -433,6 +437,7 @@ function render() {
 
         camera.translateY(velocity.y);
     }
+
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);
 } //end of render

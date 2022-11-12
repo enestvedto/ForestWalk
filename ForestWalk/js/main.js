@@ -2,6 +2,7 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
+import { DirectionalLight, Group, MeshBasicMaterial, MeshStandardMaterial, Object3D } from 'three';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -10,7 +11,6 @@ let walkCanvas = document.getElementById('forest-walk');
 let scene;
 let clock;
 let camera;
-let ambientLight;
 let controls;
 let renderer;
 let width = 129;
@@ -20,6 +20,11 @@ let textureLoader;
 let flycontrols;
 let move;
 
+// Graphics World Variables
+let skySystem;
+let sun;
+let moon;
+let directionalLight;
 
 /**
  * Startup Function
@@ -51,10 +56,29 @@ function initGraphics() {
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
-    //Lighting
-    ambientLight = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(ambientLight);
+    //Sun and Moon System
+    skySystem = new THREE.Group();
+    
+    let geometry = new THREE.SphereGeometry(1);
+    let material = new THREE.MeshBasicMaterial({color: 0xFFE87C});
 
+    sun = new THREE.Mesh(geometry, material);
+    sun.position.y = 10;
+    skySystem.add(sun);
+
+    geometry = new THREE.SphereGeometry(1);
+    material = new THREE.MeshBasicMaterial({color: 0x98A4C4})
+
+    moon = new THREE.Mesh(geometry, material);
+    moon.position.y = -10;
+    skySystem.add(moon);
+
+    scene.add(skySystem);
+
+    //DirectionalLight and Target
+    directionalLight = new DirectionalLight(0xFFFFFF);
+    scene.add(directionalLight);
+    directionalLight.target = moon;
 
     // controls
     controls = new PointerLockControls(camera, document.body);
@@ -94,11 +118,13 @@ function initGraphics() {
     initTerrain();
 
     // circle reticle
-    const geometry = new THREE.SphereGeometry(0.0005, 32, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const sphere = new THREE.Mesh(geometry, material);
+    geometry = new THREE.SphereGeometry(0.0005, 32, 16);
+    material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    let sphere = new THREE.Mesh(geometry, material);
     camera.add(sphere);
     sphere.position.set(0, 0, -.2);
+
+    console.log(scene);
 } //end of initGraphics
 
 
@@ -272,7 +298,6 @@ function initTerrain() {
     // set a random center height
     var centerHeight = getRndInteger(0, 15);
     heightMap[(width - 1) / 2][(width - 1) / 2] = centerHeight;
-    console.log(centerHeight);
 
     // set random hills and valleys around the terrain
     // now turn into geometry
@@ -393,6 +418,7 @@ function render() {
     const deltaTime = clock.getDelta();
     if (move) {
         flycontrols.update(deltaTime * .5);
+        skySystem.rotation.z += deltaTime * 0.1;
     }
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);

@@ -325,7 +325,9 @@ function smoothTerrain(smoothingIterations) {
     }
 } // end of smoothTerrain
 
-
+/***
+ * TODO: FIX THIS SO IT WORKS BETTER
+ */
 function initTerrain() {
     // make matrix of 2^k+1 by 2^k+1
     heightMap = new Array(width);
@@ -459,7 +461,7 @@ function initTerrain() {
     scene.add(mesh);
 
     // flip the terrain rightside up
-    mesh.rotation.set(-Math.PI / 2, 0, 0)
+    mesh.rotation.set(-Math.PI / 2, 0, 0) 
 } // end of initTerrain
 
 
@@ -489,7 +491,7 @@ function render() {
 
         let object = controls.getObject()
 
-        object.position.y = 1 + smoothMap[Math.abs(Math.floor(object.position.x))][Math.abs(Math.floor(object.position.z))] || 1;
+        object.position.y = 1 + smoothMap[Math.abs(Math.floor(object.position.x))][Math.abs(Math.floor(object.position.z))] || 1; //change off absolute
 
     }
 

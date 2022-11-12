@@ -55,6 +55,15 @@ function initGraphics() {
     ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
+    const color = 0x735B48;
+    const intensity = 1;
+    const directionalLight = new THREE.DirectionalLight(color, intensity);
+    directionalLight.position.set(0, 100, 100);
+    directionalLight.target.position.set(0, 0, 0);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+    scene.add(directionalLight.target);
+
 
     // controls
     controls = new PointerLockControls(camera, document.body);
@@ -86,6 +95,7 @@ function initGraphics() {
     renderer.setClearColor(0xffffff);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
+    renderer.shadowMap.enabled = true;
 
     // clock
     clock = new THREE.Clock();
@@ -276,9 +286,9 @@ function initTerrain() {
 
     // set random hills and valleys around the terrain
     // now turn into geometry
-    for (var i = 10; i < heightMap.length - 10; i += 3) {
+    for (var i = 3; i < heightMap.length; i += 3) {
         var map = heightMap[i];
-        for (var j = 10; j < map.length - 10; j += 3) {
+        for (var j = 3; j < map.length; j += 3) {
             map[j] = getRndInteger(0, 15);
         }
     }
@@ -374,15 +384,16 @@ function initTerrain() {
         map: dirtTexture,
     });
     geometry.computeVertexNormals();
-    var mesh = new THREE.Mesh(geometry, grass);
-    scene.add(mesh);
+    var terrain = new THREE.Mesh(geometry, grass);
+    scene.add(terrain);
+    terrain.receiveShadow = true;
+    terrain.castShadow = true;
 
     // flip the terrain rightside up
-    mesh.rotation.set(-Math.PI / 2, 0, 0)
-    mesh.translateX(-width / 2);
+    terrain.rotation.set(-Math.PI / 2, 0, 0)
+    terrain.translateX(-width / 2);
 
 } // end of initTerrain
-
 
 
 /**
@@ -408,5 +419,4 @@ function getRndInteger(min, max) {
 main();
 
 
-// random terrain
 // walking

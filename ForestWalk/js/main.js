@@ -19,6 +19,9 @@ let smoothMap;
 let textureLoader;
 let flycontrols;
 let move;
+let distance;
+let raycaster;
+let groundTerrain;
 
 
 /**
@@ -384,14 +387,18 @@ function initTerrain() {
         map: dirtTexture,
     });
     geometry.computeVertexNormals();
-    var terrain = new THREE.Mesh(geometry, grass);
-    scene.add(terrain);
-    terrain.receiveShadow = true;
-    terrain.castShadow = true;
+    groundTerrain = new THREE.Mesh(geometry, grass);
+    scene.add(groundTerrain);
+    groundTerrain.receiveShadow = true;
+    groundTerrain.castShadow = true;
 
     // flip the terrain rightside up
-    terrain.rotation.set(-Math.PI / 2, 0, 0)
-    terrain.translateX(-width / 2);
+    groundTerrain.rotation.set(-Math.PI / 2, 0, 0)
+    groundTerrain.translateX(-width / 2);
+
+    // "walk" on top of the terrain
+    raycaster = new THREE.Raycaster();
+
 
 } // end of initTerrain
 
@@ -404,6 +411,26 @@ function render() {
     const deltaTime = clock.getDelta();
     if (move) {
         flycontrols.update(deltaTime * .5);
+    }
+
+    // simulate walking on top of the terrain
+    raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
+    distance = 3;
+    var velocity = new THREE.Vector3();
+    var intersects = raycaster.intersectObject(groundTerrain);
+    if (intersects.length > 0) {
+        //new position is higher so you need to move you object upwards
+        if (distance > intersects[0].distance) {
+            camera.position.y += (distance - intersects[0].distance);
+        }
+        //gravity and prevent falling through floor
+        if (distance >= intersects[0].distance && velocity.y <= 0) {
+            velocity.y = 0;
+        } else if (distance <= intersects[0].distance && velocity.y === 0) {
+            velocity.y -= deltaTime;
+        }
+
+        camera.translateY(velocity.y);
     }
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);

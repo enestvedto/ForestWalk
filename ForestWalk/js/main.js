@@ -89,7 +89,7 @@ function initGraphics() {
         move = false;
     });
     flycontrols = new FlyControls(camera, document.body);
-    flycontrols.movementSpeed = 10;
+    flycontrols.movementSpeed = 15;
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -419,15 +419,16 @@ function render() {
     var velocity = new THREE.Vector3();
     var intersects = raycaster.intersectObject(groundTerrain);
     if (intersects.length > 0) {
+        var delta = distance - intersects[0].distance;
         //new position is higher so you need to move you object upwards
         if (distance > intersects[0].distance) {
-            camera.position.y += (distance - intersects[0].distance);
+            camera.position.y += (delta);
         }
         //gravity and prevent falling through floor
         if (distance >= intersects[0].distance && velocity.y <= 0) {
             velocity.y = 0;
-        } else if (distance <= intersects[0].distance && velocity.y === 0) {
-            velocity.y -= deltaTime;
+        } else if (distance <= intersects[0].distance) {
+            velocity.y -= (deltaTime);
         }
 
         camera.translateY(velocity.y);

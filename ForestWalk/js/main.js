@@ -406,7 +406,6 @@ function initTerrain() {
     groundTerrain = new THREE.Mesh(geometry, grass);
     scene.add(groundTerrain);
     groundTerrain.receiveShadow = true;
-    groundTerrain.castShadow = true;
 
     // flip the terrain rightside up
     groundTerrain.rotation.set(-Math.PI / 2, 0, 0)

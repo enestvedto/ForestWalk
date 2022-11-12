@@ -329,6 +329,16 @@ function initTerrain() {
     }
     smoothTerrain(5);
 
+    // make terrain more realistic
+    for (var i = 0; i < smoothMap.length; i++) {
+        var map = smoothMap[i];
+        for (var j = 0; j < map.length; j++) {
+            map[j] += getRndInteger(-0.02, 0.02);
+        }
+    }
+
+    smoothTerrain(1);
+
     // now turn into geometry
     textureLoader = new THREE.TextureLoader();
     var geometry = new THREE.BufferGeometry();

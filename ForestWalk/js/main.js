@@ -89,7 +89,7 @@ function initGraphics() {
         move = false;
     });
     flycontrols = new FlyControls(camera, document.body);
-    flycontrols.movementSpeed = 15;
+    flycontrols.movementSpeed = 10;
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -415,7 +415,7 @@ function render() {
 
     // simulate walking on top of the terrain
     raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
-    distance = 3;
+    distance = 2;
     var velocity = new THREE.Vector3();
     var intersects = raycaster.intersectObject(groundTerrain);
     if (intersects.length > 0) {

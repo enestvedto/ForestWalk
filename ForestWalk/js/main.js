@@ -2,7 +2,7 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
-import { DirectionalLight, Group, MeshBasicMaterial, MeshStandardMaterial, Object3D } from 'three';
+import { Vector2 } from 'three';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -17,8 +17,8 @@ let width = 129;
 let heightMap;
 let smoothMap;
 let textureLoader;
-let flycontrols;
 let move;
+
 
 // Graphics World Variables
 let skySystem;
@@ -26,11 +26,27 @@ let sun;
 let moon;
 let directionalLight;
 
+//Player and Controls
+let pointerLockControls;
+let forward = false;
+let back = false;
+let left = false;
+let right = false;
+
+const velocity =  new THREE.Vector3();
+const direction = new THREE.Vector3();
+const position = new THREE.Vector3();  
+
+
+
+
+
 /**
  * Startup Function
  */
 function main() {
     initGraphics();
+    initControls();
     render();
 } //end of main
 
@@ -52,22 +68,20 @@ function initGraphics() {
     //Camera
     camera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
     camera.name = 'camera';
-    camera.position.z = 10;
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
     //Sun and Moon System
     skySystem = new THREE.Group();
-    
+
     let geometry = new THREE.SphereGeometry(1);
-    let material = new THREE.MeshBasicMaterial({color: 0xFFE87C});
+    let material = new THREE.MeshBasicMaterial({ color: 0xFFE87C });
 
     sun = new THREE.Mesh(geometry, material);
     sun.position.y = 10;
     skySystem.add(sun);
 
     geometry = new THREE.SphereGeometry(1);
-    material = new THREE.MeshBasicMaterial({color: 0x98A4C4})
+    material = new THREE.MeshBasicMaterial({ color: 0x98A4C4 })
 
     moon = new THREE.Mesh(geometry, material);
     moon.position.y = -10;
@@ -76,32 +90,9 @@ function initGraphics() {
     scene.add(skySystem);
 
     //DirectionalLight and Target
-    directionalLight = new DirectionalLight(0xFFFFFF);
+    directionalLight = new THREE.DirectionalLight(0xFFFFFF);
     scene.add(directionalLight);
     directionalLight.target = moon;
-
-    // controls
-    controls = new PointerLockControls(camera, document.body);
-    controls.pointerSpeed = 0.5;
-    let instructions = document.getElementById('instructions');
-    let blocker = document.getElementById('blocker');
-    instructions.addEventListener('click', function () {
-        controls.lock();
-    });
-
-    controls.addEventListener('lock', function () {
-        instructions.style.display = 'none';
-        blocker.style.display = 'none';
-        move = true;
-    });
-
-    controls.addEventListener('unlock', function () {
-        blocker.style.display = 'block';
-        instructions.style.display = '';
-        move = false;
-    });
-    flycontrols = new FlyControls(camera, document.body);
-    flycontrols.movementSpeed = 15;
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -127,6 +118,71 @@ function initGraphics() {
     console.log(scene);
 } //end of initGraphics
 
+function initControls() {
+
+    controls = new PointerLockControls(camera, document.body);
+    controls.pointerSpeed = 0.5;
+
+    let instructions = document.getElementById('instructions');
+    let blocker = document.getElementById('blocker');
+    instructions.addEventListener('click', function () {
+        controls.lock();
+    });
+
+    controls.addEventListener('lock', function () {
+        instructions.style.display = 'none';
+        blocker.style.display = 'none';
+        move = true;
+    });
+
+    controls.addEventListener('unlock', function () {
+        blocker.style.display = 'block';
+        instructions.style.display = '';
+        move = false;
+    });
+
+    document.onkeydown = function (e) {
+        switch (e.key) {
+            case 'W':
+            case 'w':
+                forward = true;
+                break;
+            case 'S':
+            case 's':
+                back = true;
+                break;
+            case 'D':
+            case 'd':
+                right = true;
+                break;
+            case 'A':
+            case 'a':
+                left = true;
+                break;
+        }
+    };
+
+    document.onkeyup = function (e) {
+        switch (e.key) {
+            case 'W':
+            case 'w':
+                forward = false;
+                break;
+            case 'S':
+            case 's':
+                back = false;
+                break;
+            case 'D':
+            case 'd':
+                right = false;
+                break;
+            case 'A':
+            case 'a':
+                left = false;
+                break;
+        }
+    };
+}
 
 // function to populate array
 function heightField(topRow, bottomRow, leftColumn, rightColumn) {
@@ -404,8 +460,6 @@ function initTerrain() {
 
     // flip the terrain rightside up
     mesh.rotation.set(-Math.PI / 2, 0, 0)
-    mesh.translateX(-width / 2);
-
 } // end of initTerrain
 
 
@@ -415,11 +469,30 @@ function initTerrain() {
  * must be taken during a single render.
  */
 function render() {
-    const deltaTime = clock.getDelta();
+    const delta = clock.getDelta();
+
     if (move) {
-        flycontrols.update(deltaTime * .5);
-        skySystem.rotation.z += deltaTime * 0.1;
+        skySystem.rotation.z += delta * 0.1;
+
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+
+        direction.z = Number( forward ) - Number( back );
+        direction.x = Number( right ) - Number( left );
+        direction.normalize();
+
+        if ( forward || back ) velocity.z -= direction.z * 100.0 * delta;
+        if ( left || right ) velocity.x -= direction.x * 100.0 * delta;
+
+        controls.moveRight( - velocity.x * delta );
+        controls.moveForward( - velocity.z * delta );
+
+        let object = controls.getObject()
+
+        object.position.y = 1 + smoothMap[Math.abs(Math.floor(object.position.x))][Math.abs(Math.floor(object.position.z))] || 1;
+
     }
+
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);
 } //end of render

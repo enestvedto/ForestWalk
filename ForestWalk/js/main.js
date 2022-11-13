@@ -34,9 +34,9 @@ let back = false;
 let left = false;
 let right = false;
 
-const velocity =  new THREE.Vector3();
+const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
-const position = new THREE.Vector3();  
+const position = new THREE.Vector3();
 
 
 
@@ -72,17 +72,20 @@ function initGraphics() {
     scene.add(camera);
 
     //Sun and Moon System
+    let textload = new THREE.TextureLoader();
     skySystem = new THREE.Group();
 
+    const sunTexture = textload.load('assets/sun.jpeg');
     let geometry = new THREE.SphereGeometry(1);
-    let material = new THREE.MeshBasicMaterial({ color: 0xFFE87C });
+    let material = new THREE.MeshStandardMaterial({ map: sunTexture }); // color: 0xFFE87C });
 
     sun = new THREE.Mesh(geometry, material);
     sun.position.y = 10;
     skySystem.add(sun);
 
+    const moonTexture = textload.load('assets/moon.jpeg');
     geometry = new THREE.SphereGeometry(1);
-    material = new THREE.MeshBasicMaterial({ color: 0x98A4C4 })
+    material = new THREE.MeshBasicMaterial({ map: moonTexture })
 
     moon = new THREE.Mesh(geometry, material);
     moon.position.y = -10;
@@ -94,6 +97,9 @@ function initGraphics() {
     directionalLight = new THREE.DirectionalLight(0xFFFFFF);
     scene.add(directionalLight);
     directionalLight.target = moon;
+
+    const light = new THREE.AmbientLight(0x404040); // soft white light
+    scene.add(light);
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -468,7 +474,7 @@ function initTerrain() {
     scene.add(mesh);
 
     // flip the terrain rightside up
-    mesh.rotation.set(-Math.PI / 2, 0, 0) 
+    mesh.rotation.set(-Math.PI / 2, 0, 0)
 } // end of initTerrain
 
 
@@ -486,15 +492,15 @@ function render() {
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
 
-        direction.z = Number( forward ) - Number( back );
-        direction.x = Number( right ) - Number( left );
+        direction.z = Number(forward) - Number(back);
+        direction.x = Number(right) - Number(left);
         direction.normalize();
 
-        if ( forward || back ) velocity.z -= direction.z * 100.0 * delta;
-        if ( left || right ) velocity.x -= direction.x * 100.0 * delta;
+        if (forward || back) velocity.z -= direction.z * 100.0 * delta;
+        if (left || right) velocity.x -= direction.x * 100.0 * delta;
 
-        controls.moveRight( - velocity.x * delta );
-        controls.moveForward( - velocity.z * delta );
+        controls.moveRight(- velocity.x * delta);
+        controls.moveForward(- velocity.z * delta);
 
         let object = controls.getObject()
 

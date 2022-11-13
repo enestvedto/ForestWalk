@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
 import { Vector2 } from 'three';
+import { generateTrinaryTree } from './Trees';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -116,6 +117,12 @@ function initGraphics() {
     sphere.position.set(0, 0, -.2);
 
     console.log(scene);
+
+    //test tree
+    let t = generateTrinaryTree(5);
+    console.log(t);
+    scene.add(t);
+    
 } //end of initGraphics
 
 function initControls() {

@@ -1,7 +1,7 @@
 import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { FlyControls } from 'three/addons/controls/FlyControls.js';
+import { generateTrinaryTree } from './Trees';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -10,28 +10,46 @@ let walkCanvas = document.getElementById('forest-walk');
 let scene;
 let clock;
 let camera;
-let ambientLight;
 let controls;
 let renderer;
 let width = 129;
 let heightMap;
 let smoothMap;
 let textureLoader;
-let flycontrols;
 let move;
 let distance;
 let raycaster;
 let groundTerrain;
 let reticle;
 let cameraSphere;
-
 let circleList;
+
+// Graphics World Variables
+let skySystem;
+let sun;
+let moon;
+let directionalLight;
+
+//Player and Controls
+let forward = false;
+let back = false;
+let left = false;
+let right = false;
+
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+const position = new THREE.Vector3();
+
+
+
+
 
 /**
  * Startup Function
  */
 function main() {
     initGraphics();
+    initControls();
     render();
 } //end of main
 
@@ -51,32 +69,80 @@ function initGraphics() {
     //Camera
     camera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
     camera.name = 'camera';
-    camera.position.z = 10;
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
-    //Lighting
-    ambientLight = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(ambientLight);
+    //Sun and Moon System
+    let textload = new THREE.TextureLoader();
+    skySystem = new THREE.Group();
 
     const color = 0x735B48;
     const intensity = 1;
-    const directionalLight = new THREE.DirectionalLight(color, intensity);
-    directionalLight.position.set(0, 100, 100);
-    directionalLight.target.position.set(0, 0, 0);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
-    scene.add(directionalLight.target);
+    const dl = new THREE.DirectionalLight(color, intensity);
+    dl.position.set(0, 100, 100);
+    dl.target.position.set(0, 0, 0);
+    dl.castShadow = true;
+    scene.add(dl);
+    scene.add(dl.target);
 
     // flashlight
     const flashlight = new THREE.SpotLight(0xffffff, 3, 40, Math.PI / 10, 0.75, 2);
     camera.add(flashlight);
     flashlight.position.set(0, 0, 1);
     flashlight.target = camera;
+    const sunTexture = textload.load('assets/sun.jpeg');
+    let geometry = new THREE.SphereGeometry(1);
+    let material = new THREE.MeshStandardMaterial({ map: sunTexture }); // color: 0xFFE87C });
 
-    // controls
+    sun = new THREE.Mesh(geometry, material);
+    sun.position.y = 10;
+    skySystem.add(sun);
+
+    const moonTexture = textload.load('assets/moon.jpeg');
+    geometry = new THREE.SphereGeometry(1);
+    material = new THREE.MeshBasicMaterial({ map: moonTexture })
+
+    moon = new THREE.Mesh(geometry, material);
+    moon.position.y = -10;
+    skySystem.add(moon);
+
+    scene.add(skySystem);
+
+    //DirectionalLight and Target
+    directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+    scene.add(directionalLight);
+    directionalLight.target = moon;
+
+    const light = new THREE.AmbientLight(0x404040); // soft white light
+    scene.add(light);
+
+
+    // clock
+    clock = new THREE.Clock();
+
+    // initialize terrain
+    initTerrain();
+
+    // circle reticle
+    geometry = new THREE.SphereGeometry(0.0005, 32, 16);
+    material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    let sphere = new THREE.Mesh(geometry, material);
+    camera.add(sphere);
+    sphere.position.set(0, 0, -.2);
+
+    console.log(scene);
+
+    //test tree
+    let t = generateTrinaryTree(5);
+    console.log(t);
+    scene.add(t);
+
+} //end of initGraphics
+
+function initControls() {
+
     controls = new PointerLockControls(camera, document.body);
     controls.pointerSpeed = 0.5;
+
     let instructions = document.getElementById('instructions');
     let blocker = document.getElementById('blocker');
     instructions.addEventListener('click', function () {
@@ -94,8 +160,6 @@ function initGraphics() {
         instructions.style.display = '';
         move = false;
     });
-    flycontrols = new FlyControls(camera, document.body);
-    flycontrols.movementSpeed = 15;
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -150,9 +214,51 @@ function initGraphics() {
     circleList.push(s4);
     circleList.push(s5);
 
+    camera.translateY(10);
+
 
 } //end of initGraphics
+document.onkeydown = function (e) {
+    switch (e.key) {
+        case 'W':
+        case 'w':
+            forward = true;
+            break;
+        case 'S':
+        case 's':
+            back = true;
+            break;
+        case 'D':
+        case 'd':
+            right = true;
+            break;
+        case 'A':
+        case 'a':
+            left = true;
+            break;
+    }
+};
 
+document.onkeyup = function (e) {
+    switch (e.key) {
+        case 'W':
+        case 'w':
+            forward = false;
+            break;
+        case 'S':
+        case 's':
+            back = false;
+            break;
+        case 'D':
+        case 'd':
+            right = false;
+            break;
+        case 'A':
+        case 'a':
+            left = false;
+            break;
+    }
+};
 
 // function to populate array
 function heightField(topRow, bottomRow, leftColumn, rightColumn) {
@@ -453,15 +559,34 @@ function initTerrain() {
  * must be taken during a single render.
  */
 function render() {
-    const deltaTime = clock.getDelta();
+    const timedelta = clock.getDelta();
+
     if (move) {
-        flycontrols.update(deltaTime * .5);
+        skySystem.rotation.z += timedelta * 0.1;
+
+        velocity.x -= velocity.x * 10.0 * timedelta;
+        velocity.z -= velocity.z * 10.0 * timedelta;
+
+        direction.z = Number(forward) - Number(back);
+        direction.x = Number(right) - Number(left);
+        direction.normalize();
+
+        if (forward || back) velocity.z -= direction.z * 100.0 * timedelta;
+        if (left || right) velocity.x -= direction.x * 100.0 * timedelta;
+
+        controls.moveRight(- velocity.x * timedelta);
+        controls.moveForward(- velocity.z * timedelta);
+
+        let object = controls.getObject()
+
+        //object.position.y = 1 + smoothMap[Math.abs(Math.floor(object.position.x))][Math.abs(Math.floor(object.position.z))] || 1; //change off absolute
+
     }
 
     // simulate walking on top of the terrain
     raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
     distance = 2;
-    var velocity = new THREE.Vector3();
+    var velo = new THREE.Vector3();
     var intersects = raycaster.intersectObject(groundTerrain);
     if (intersects.length > 0) {
         var delta = distance - intersects[0].distance;
@@ -470,13 +595,13 @@ function render() {
             camera.position.y += (delta);
         }
         //gravity and prevent falling through floor
-        if (distance >= intersects[0].distance && velocity.y <= 0) {
-            velocity.y = 0;
+        if (distance >= intersects[0].distance && velo.y <= 0) {
+            velo.y = 0;
         } else if (distance <= intersects[0].distance) {
-            velocity.y -= (deltaTime);
+            velo.y -= (timedelta);
         }
 
-        camera.translateY(velocity.y);
+        camera.translateY(velo.y);
     }
 
 

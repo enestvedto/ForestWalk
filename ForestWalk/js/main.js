@@ -549,14 +549,14 @@ function render() {
     if (intersects.length > 0) {
         var delta = distance - intersects[0].distance;
         //new position is higher so you need to move you object upwards
-        if (distance > intersects[0].distance) {
+        if (distance >= intersects[0].distance) {
             camera.position.y += (delta);
         }
         //gravity and prevent falling through floor
         if (distance >= intersects[0].distance && velocity.y <= 0) {
             velocity.y = 0;
-        } else if (distance <= intersects[0].distance) {
-            velocity.y -= (deltaTime);
+        } else if (distance < intersects[0].distance) {
+            velocity.y += (delta);
         }
 
         camera.translateY(velocity.y);

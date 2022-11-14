@@ -564,8 +564,8 @@ function render() {
     if (move) {
         skySystem.rotation.z += timedelta * 0.1;
 
-        velocity.x -= velocity.x * 10.0 * timedelta;
-        velocity.z -= velocity.z * 10.0 * timedelta;
+        velocity.x -= velocity.x * 15.0 * timedelta;
+        velocity.z -= velocity.z * 15.0 * timedelta;
 
         direction.z = Number(forward) - Number(back);
         direction.x = Number(right) - Number(left);

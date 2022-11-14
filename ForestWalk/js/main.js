@@ -125,7 +125,6 @@ function initGraphics() {
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
     camera.add(cameraSphere);
 
-
     // random shapes for raycast detection
     const g = new THREE.SphereGeometry(1);
     const m = new THREE.MeshBasicMaterial({ color: 0xf0000 });
@@ -441,10 +440,12 @@ function initTerrain() {
 
     // flip the terrain rightside up
     groundTerrain.rotation.set(-Math.PI / 2, 0, 0)
-    groundTerrain.translateX(-width / 2);
 
     // "walk" on top of the terrain
     raycaster = new THREE.Raycaster();
+
+    // start in the middle of the terrain
+    camera.position.set(64, smoothMap[64][64] + 1, -64);
 } // end of initTerrain
 
 
@@ -453,6 +454,7 @@ function initTerrain() {
  * must be taken during a single render.
  */
 function render() {
+    console.log(camera.position)
     const deltaTime = clock.getDelta();
     if (move) {
         flycontrols.update(deltaTime * .5);

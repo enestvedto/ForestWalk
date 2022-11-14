@@ -1,7 +1,7 @@
 import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { generateTrinaryTree } from './Trees';
+import { generateBarnsleyTree, generateTrinaryTree } from './Trees';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -129,9 +129,10 @@ function initGraphics() {
     console.log(scene);
 
     //test tree
-    let t = generateTrinaryTree(2);
+    let t = generateBarnsleyTree(6);
     console.log(t);
     scene.add(t);
+
 
     //Renderer
     renderer = new THREE.WebGLRenderer({

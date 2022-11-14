@@ -1,8 +1,6 @@
 import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { FlyControls } from 'three/addons/controls/FlyControls.js';
-import { Vector2 } from 'three';
 import { generateTrinaryTree } from './Trees';
 
 //Dom elements
@@ -19,7 +17,12 @@ let heightMap;
 let smoothMap;
 let textureLoader;
 let move;
-
+let distance;
+let raycaster;
+let groundTerrain;
+let reticle;
+let cameraSphere;
+let circleList;
 
 // Graphics World Variables
 let skySystem;
@@ -28,7 +31,6 @@ let moon;
 let directionalLight;
 
 //Player and Controls
-let pointerLockControls;
 let forward = false;
 let back = false;
 let left = false;
@@ -60,8 +62,6 @@ function initGraphics() {
     //Scene
     scene = new THREE.Scene();
 
-
-    // reticle
     const axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
 
@@ -75,6 +75,20 @@ function initGraphics() {
     let textload = new THREE.TextureLoader();
     skySystem = new THREE.Group();
 
+    const color = 0x735B48;
+    const intensity = 1;
+    const dl = new THREE.DirectionalLight(color, intensity);
+    dl.position.set(0, 100, 100);
+    dl.target.position.set(0, 0, 0);
+    dl.castShadow = true;
+    scene.add(dl);
+    scene.add(dl.target);
+
+    // flashlight
+    const flashlight = new THREE.SpotLight(0xffffff, 3, 40, Math.PI / 10, 0.75, 2);
+    camera.add(flashlight);
+    flashlight.position.set(0, 0, 1);
+    flashlight.target = camera;
     const sunTexture = textload.load('assets/sun.jpeg');
     let geometry = new THREE.SphereGeometry(1);
     let material = new THREE.MeshStandardMaterial({ map: sunTexture }); // color: 0xFFE87C });
@@ -101,13 +115,6 @@ function initGraphics() {
     const light = new THREE.AmbientLight(0x404040); // soft white light
     scene.add(light);
 
-    //Renderer
-    renderer = new THREE.WebGLRenderer({
-        canvas: walkCanvas,
-    });
-    renderer.setClearColor(0xffffff);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
 
     // clock
     clock = new THREE.Clock();
@@ -128,7 +135,7 @@ function initGraphics() {
     let t = generateTrinaryTree(2);
     console.log(t);
     scene.add(t);
-    
+
 } //end of initGraphics
 
 function initControls() {
@@ -154,48 +161,104 @@ function initControls() {
         move = false;
     });
 
-    document.onkeydown = function (e) {
-        switch (e.key) {
-            case 'W':
-            case 'w':
-                forward = true;
-                break;
-            case 'S':
-            case 's':
-                back = true;
-                break;
-            case 'D':
-            case 'd':
-                right = true;
-                break;
-            case 'A':
-            case 'a':
-                left = true;
-                break;
-        }
-    };
+    //Renderer
+    renderer = new THREE.WebGLRenderer({
+        canvas: walkCanvas,
+    });
+    renderer.setClearColor(0xffffff);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
+    renderer.shadowMap.enabled = true;
 
-    document.onkeyup = function (e) {
-        switch (e.key) {
-            case 'W':
-            case 'w':
-                forward = false;
-                break;
-            case 'S':
-            case 's':
-                back = false;
-                break;
-            case 'D':
-            case 'd':
-                right = false;
-                break;
-            case 'A':
-            case 'a':
-                left = false;
-                break;
-        }
-    };
-}
+    // clock
+    clock = new THREE.Clock();
+
+    // initialize terrain
+    initTerrain();
+
+    // circle reticle
+    const geometry = new THREE.SphereGeometry(0.0005, 32, 16);
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    reticle = new THREE.Mesh(geometry, material);
+    camera.add(reticle);
+    reticle.position.set(0, 0, -.2);
+
+    // camera sphere
+    const cameraGeometry = new THREE.SphereGeometry(2);
+    const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
+    camera.add(cameraSphere);
+
+
+    // random shapes for raycast detection
+    const g = new THREE.SphereGeometry(1);
+    const m = new THREE.MeshBasicMaterial({ color: 0xf0000 });
+    const s1 = new THREE.Mesh(g, m);
+    const s2 = new THREE.Mesh(g, m);
+    const s3 = new THREE.Mesh(g, m);
+    const s4 = new THREE.Mesh(g, m);
+    const s5 = new THREE.Mesh(g, m);
+    scene.add(s1);
+    s1.translateX(5)
+    scene.add(s2);
+    s2.translateX(-5)
+    scene.add(s3);
+    s3.translateZ(5)
+    scene.add(s4);
+    s4.translateZ(-5)
+    scene.add(s5);
+    circleList = [];
+    circleList.push(s1);
+    circleList.push(s2);
+    circleList.push(s3);
+    circleList.push(s4);
+    circleList.push(s5);
+
+    camera.translateY(10);
+
+
+} //end of initGraphics
+document.onkeydown = function (e) {
+    switch (e.key) {
+        case 'W':
+        case 'w':
+            forward = true;
+            break;
+        case 'S':
+        case 's':
+            back = true;
+            break;
+        case 'D':
+        case 'd':
+            right = true;
+            break;
+        case 'A':
+        case 'a':
+            left = true;
+            break;
+    }
+};
+
+document.onkeyup = function (e) {
+    switch (e.key) {
+        case 'W':
+        case 'w':
+            forward = false;
+            break;
+        case 'S':
+        case 's':
+            back = false;
+            break;
+        case 'D':
+        case 'd':
+            right = false;
+            break;
+        case 'A':
+        case 'a':
+            left = false;
+            break;
+    }
+};
 
 // function to populate array
 function heightField(topRow, bottomRow, leftColumn, rightColumn) {
@@ -338,9 +401,7 @@ function smoothTerrain(smoothingIterations) {
     }
 } // end of smoothTerrain
 
-/***
- * TODO: FIX THIS SO IT WORKS BETTER
- */
+
 function initTerrain() {
     // make matrix of 2^k+1 by 2^k+1
     heightMap = new Array(width);
@@ -372,9 +433,9 @@ function initTerrain() {
 
     // set random hills and valleys around the terrain
     // now turn into geometry
-    for (var i = 10; i < heightMap.length - 10; i += 3) {
+    for (var i = 3; i < heightMap.length; i += 3) {
         var map = heightMap[i];
-        for (var j = 10; j < map.length - 10; j += 3) {
+        for (var j = 3; j < map.length; j += 3) {
             map[j] = getRndInteger(0, 15);
         }
     }
@@ -405,6 +466,16 @@ function initTerrain() {
         }
     }
     smoothTerrain(5);
+
+    // make terrain more realistic
+    for (var i = 0; i < smoothMap.length; i++) {
+        var map = smoothMap[i];
+        for (var j = 0; j < map.length; j++) {
+            map[j] += getRndInteger(-0.02, 0.02);
+        }
+    }
+
+    smoothTerrain(1);
 
     // now turn into geometry
     textureLoader = new THREE.TextureLoader();
@@ -470,13 +541,17 @@ function initTerrain() {
         map: dirtTexture,
     });
     geometry.computeVertexNormals();
-    var mesh = new THREE.Mesh(geometry, grass);
-    scene.add(mesh);
+    groundTerrain = new THREE.Mesh(geometry, grass);
+    scene.add(groundTerrain);
+    groundTerrain.receiveShadow = true;
 
     // flip the terrain rightside up
-    mesh.rotation.set(-Math.PI / 2, 0, 0)
-} // end of initTerrain
+    groundTerrain.rotation.set(-Math.PI / 2, 0, 0)
+    groundTerrain.translateX(-width / 2);
 
+    // "walk" on top of the terrain
+    raycaster = new THREE.Raycaster();
+} // end of initTerrain
 
 
 /**
@@ -484,29 +559,78 @@ function initTerrain() {
  * must be taken during a single render.
  */
 function render() {
-    const delta = clock.getDelta();
+    const timedelta = clock.getDelta();
 
     if (move) {
-        skySystem.rotation.z += delta * 0.1;
+        skySystem.rotation.z += timedelta * 0.1;
 
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
+        velocity.x -= velocity.x * 10.0 * timedelta;
+        velocity.z -= velocity.z * 10.0 * timedelta;
 
         direction.z = Number(forward) - Number(back);
         direction.x = Number(right) - Number(left);
         direction.normalize();
 
-        if (forward || back) velocity.z -= direction.z * 100.0 * delta;
-        if (left || right) velocity.x -= direction.x * 100.0 * delta;
+        if (forward || back) velocity.z -= direction.z * 100.0 * timedelta;
+        if (left || right) velocity.x -= direction.x * 100.0 * timedelta;
 
-        controls.moveRight(- velocity.x * delta);
-        controls.moveForward(- velocity.z * delta);
-
-        let object = controls.getObject()
-
-        object.position.y = 1 + smoothMap[Math.abs(Math.floor(object.position.x))][Math.abs(Math.floor(object.position.z))] || 1; //change off absolute
-
+        controls.moveRight(- velocity.x * timedelta);
+        controls.moveForward(- velocity.z * timedelta);
     }
+
+    // simulate walking on top of the terrain
+    raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
+    distance = 2;
+    var velo = new THREE.Vector3();
+    var intersects = raycaster.intersectObject(groundTerrain);
+    if (intersects.length > 0) {
+        var delta = distance - intersects[0].distance;
+        //new position is higher so you need to move you object upwards
+        if (distance > intersects[0].distance) {
+            camera.position.y += (delta);
+        }
+        //gravity and prevent falling through floor
+        if (distance >= intersects[0].distance && velo.y <= 0) {
+            velo.y = 0;
+        } else if (distance <= intersects[0].distance) {
+            velo.y -= (timedelta);
+        }
+        camera.translateY(velo.y);
+    }
+
+
+    // find intersections with trees
+    var vector = new THREE.Vector3(0, 0, -1);
+    vector = camera.localToWorld(vector);
+    // make vector a unit vector with the same direction as the camera
+    vector.sub(camera.position);
+
+    var raycaster2 = new THREE.Raycaster(camera.position, vector);
+    const treeIntersects = raycaster2.intersectObjects(circleList, false);
+
+    if (treeIntersects.length > 0) {
+        // implement changing tree opacity here
+    }
+
+    // check for collisions here
+    circleList.forEach(circle => {
+        cameraSphere.geometry.computeBoundingSphere();
+        cameraSphere.updateMatrixWorld();
+        var bb1 = cameraSphere.geometry.boundingSphere.clone();
+        bb1.applyMatrix4(cameraSphere.matrixWorld);
+        // if there is an intersection then refuse the size
+        circle.geometry.computeBoundingSphere();
+        circle.updateMatrixWorld();
+        var bb2 = circle.geometry.boundingSphere.clone();
+        bb2.applyMatrix4(circle.matrixWorld);
+        // if there is a collision, stop movement
+        if (bb1.intersectsSphere(bb2)) {
+            var vector = new THREE.Vector3();
+            camera.getWorldDirection(vector);
+            vector.normalize();
+        }
+    });
+
 
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);
@@ -522,5 +646,4 @@ function getRndInteger(min, max) {
 main();
 
 
-// random terrain
-// walking
+// walkingn

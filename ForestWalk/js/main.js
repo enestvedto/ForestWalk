@@ -28,7 +28,7 @@ let circleList;
 let skySystem;
 let sun;
 let moon;
-let directionalLight;
+let directionalLight, directionalLight2;
 
 //Player and Controls
 let forward = false;
@@ -75,20 +75,6 @@ function initGraphics() {
     let textload = new THREE.TextureLoader();
     skySystem = new THREE.Group();
 
-    const color = 0x735B48;
-    const intensity = 1;
-    const dl = new THREE.DirectionalLight(color, intensity);
-    dl.position.set(0, 100, 100);
-    dl.target.position.set(0, 0, 0);
-    dl.castShadow = true;
-    scene.add(dl);
-    scene.add(dl.target);
-
-    // flashlight
-    const flashlight = new THREE.SpotLight(0xffffff, 3, 40, Math.PI / 10, 0.75, 2);
-    camera.add(flashlight);
-    flashlight.position.set(0, 0, 1);
-    flashlight.target = camera;
     const sunTexture = textload.load('assets/sun.jpeg');
     let geometry = new THREE.SphereGeometry(1);
     let material = new THREE.MeshStandardMaterial({ map: sunTexture }); // color: 0xFFE87C });
@@ -104,16 +90,27 @@ function initGraphics() {
     moon = new THREE.Mesh(geometry, material);
     moon.position.y = -10;
     skySystem.add(moon);
-
     scene.add(skySystem);
 
-    //DirectionalLight and Target
+    //DirectionalLights and Target
     directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+    directionalLight.castShadow = true;
     scene.add(directionalLight);
     directionalLight.target = moon;
 
-    const light = new THREE.AmbientLight(0x404040); // soft white light
+    directionalLight2 = new THREE.DirectionalLight(0x735B48, 0.1);
+    directionalLight2.castShadow = true;
+    scene.add(directionalLight2);
+    directionalLight2.target = sun;
+
+    const light = new THREE.AmbientLight(0x404040, 0.1); // soft white light
     scene.add(light);
+
+    // flashlight
+    const flashlight = new THREE.SpotLight(0xffffff, 3, 40, Math.PI / 10, 0.75, 2);
+    camera.add(flashlight);
+    flashlight.position.set(0, 0, 1);
+    flashlight.target = camera;
 
 
     // clock
@@ -135,6 +132,50 @@ function initGraphics() {
     let t = generateTrinaryTree(2);
     console.log(t);
     scene.add(t);
+
+    //Renderer
+    renderer = new THREE.WebGLRenderer({
+        canvas: walkCanvas,
+    });
+    renderer.setClearColor(0xffffff);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
+    renderer.shadowMap.enabled = true;
+
+    // clock
+    clock = new THREE.Clock();
+
+    // camera sphere
+    const cameraGeometry = new THREE.SphereGeometry(2);
+    const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
+    camera.add(cameraSphere);
+
+    camera.translateY(10);
+
+    // random shapes for raycast detection
+    const g = new THREE.SphereGeometry(1);
+    const m = new THREE.MeshBasicMaterial({ color: 0xf0000 });
+    const s1 = new THREE.Mesh(g, m);
+    const s2 = new THREE.Mesh(g, m);
+    const s3 = new THREE.Mesh(g, m);
+    const s4 = new THREE.Mesh(g, m);
+    const s5 = new THREE.Mesh(g, m);
+    scene.add(s1);
+    s1.translateX(5)
+    scene.add(s2);
+    s2.translateX(-5)
+    scene.add(s3);
+    s3.translateZ(5)
+    scene.add(s4);
+    s4.translateZ(-5)
+    scene.add(s5);
+    circleList = [];
+    circleList.push(s1);
+    circleList.push(s2);
+    circleList.push(s3);
+    circleList.push(s4);
+    circleList.push(s5);
 
 } //end of initGraphics
 
@@ -161,104 +202,48 @@ function initControls() {
         move = false;
     });
 
-    //Renderer
-    renderer = new THREE.WebGLRenderer({
-        canvas: walkCanvas,
-    });
-    renderer.setClearColor(0xffffff);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
-    renderer.shadowMap.enabled = true;
+    document.onkeydown = function (e) {
+        switch (e.key) {
+            case 'W':
+            case 'w':
+                forward = true;
+                break;
+            case 'S':
+            case 's':
+                back = true;
+                break;
+            case 'D':
+            case 'd':
+                right = true;
+                break;
+            case 'A':
+            case 'a':
+                left = true;
+                break;
+        }
+    };
 
-    // clock
-    clock = new THREE.Clock();
-
-    // initialize terrain
-    initTerrain();
-
-    // circle reticle
-    const geometry = new THREE.SphereGeometry(0.0005, 32, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    reticle = new THREE.Mesh(geometry, material);
-    camera.add(reticle);
-    reticle.position.set(0, 0, -.2);
-
-    // camera sphere
-    const cameraGeometry = new THREE.SphereGeometry(2);
-    const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
-    camera.add(cameraSphere);
-
-
-    // random shapes for raycast detection
-    const g = new THREE.SphereGeometry(1);
-    const m = new THREE.MeshBasicMaterial({ color: 0xf0000 });
-    const s1 = new THREE.Mesh(g, m);
-    const s2 = new THREE.Mesh(g, m);
-    const s3 = new THREE.Mesh(g, m);
-    const s4 = new THREE.Mesh(g, m);
-    const s5 = new THREE.Mesh(g, m);
-    scene.add(s1);
-    s1.translateX(5)
-    scene.add(s2);
-    s2.translateX(-5)
-    scene.add(s3);
-    s3.translateZ(5)
-    scene.add(s4);
-    s4.translateZ(-5)
-    scene.add(s5);
-    circleList = [];
-    circleList.push(s1);
-    circleList.push(s2);
-    circleList.push(s3);
-    circleList.push(s4);
-    circleList.push(s5);
-
-    camera.translateY(10);
-
-
-} //end of initGraphics
-document.onkeydown = function (e) {
-    switch (e.key) {
-        case 'W':
-        case 'w':
-            forward = true;
-            break;
-        case 'S':
-        case 's':
-            back = true;
-            break;
-        case 'D':
-        case 'd':
-            right = true;
-            break;
-        case 'A':
-        case 'a':
-            left = true;
-            break;
-    }
-};
-
-document.onkeyup = function (e) {
-    switch (e.key) {
-        case 'W':
-        case 'w':
-            forward = false;
-            break;
-        case 'S':
-        case 's':
-            back = false;
-            break;
-        case 'D':
-        case 'd':
-            right = false;
-            break;
-        case 'A':
-        case 'a':
-            left = false;
-            break;
-    }
-};
+    document.onkeyup = function (e) {
+        switch (e.key) {
+            case 'W':
+            case 'w':
+                forward = false;
+                break;
+            case 'S':
+            case 's':
+                back = false;
+                break;
+            case 'D':
+            case 'd':
+                right = false;
+                break;
+            case 'A':
+            case 'a':
+                left = false;
+                break;
+        }
+    };
+} //end of initControls
 
 // function to populate array
 function heightField(topRow, bottomRow, leftColumn, rightColumn) {

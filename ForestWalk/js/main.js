@@ -23,8 +23,9 @@ let distance;
 let raycaster;
 let groundTerrain;
 let reticle;
-let flashLight;
+let cameraSphere;
 
+let circleList;
 
 /**
  * Startup Function
@@ -43,8 +44,6 @@ function initGraphics() {
     //Scene
     scene = new THREE.Scene();
 
-
-    // reticle
     const axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
 
@@ -119,6 +118,39 @@ function initGraphics() {
     reticle = new THREE.Mesh(geometry, material);
     camera.add(reticle);
     reticle.position.set(0, 0, -.2);
+
+    // camera sphere
+    const cameraGeometry = new THREE.SphereGeometry(2);
+    const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
+    camera.add(cameraSphere);
+
+
+    // random shapes for raycast detection
+    const g = new THREE.SphereGeometry(1);
+    const m = new THREE.MeshBasicMaterial({ color: 0xf0000 });
+    const s1 = new THREE.Mesh(g, m);
+    const s2 = new THREE.Mesh(g, m);
+    const s3 = new THREE.Mesh(g, m);
+    const s4 = new THREE.Mesh(g, m);
+    const s5 = new THREE.Mesh(g, m);
+    scene.add(s1);
+    s1.translateX(5)
+    scene.add(s2);
+    s2.translateX(-5)
+    scene.add(s3);
+    s3.translateZ(5)
+    scene.add(s4);
+    s4.translateZ(-5)
+    scene.add(s5);
+    circleList = [];
+    circleList.push(s1);
+    circleList.push(s2);
+    circleList.push(s3);
+    circleList.push(s4);
+    circleList.push(s5);
+
+
 } //end of initGraphics
 
 
@@ -447,6 +479,45 @@ function render() {
         camera.translateY(velocity.y);
     }
 
+
+    // find intersections with trees
+    var vector = new THREE.Vector3(0, 0, -1);
+    vector = camera.localToWorld(vector);
+    // make vector a unit vector with the same direction as the camera
+    vector.sub(camera.position);
+
+    var raycaster2 = new THREE.Raycaster(camera.position, vector);
+    const treeIntersects = raycaster2.intersectObjects(circleList, false);
+
+    if (treeIntersects.length > 0) {
+        // test message
+        //console.log('intersecting with the black circles!');
+
+
+        // implement changing tree opacity here
+
+    }
+
+    // check for collisions here
+    circleList.forEach(circle => {
+        cameraSphere.geometry.computeBoundingSphere();
+        cameraSphere.updateMatrixWorld();
+        var bb1 = cameraSphere.geometry.boundingSphere.clone();
+        bb1.applyMatrix4(cameraSphere.matrixWorld);
+        // if there is an intersection then refuse the size
+        circle.geometry.computeBoundingSphere();
+        circle.updateMatrixWorld();
+        var bb2 = circle.geometry.boundingSphere.clone();
+        bb2.applyMatrix4(circle.matrixWorld);
+        // if there is a collision, stop movement
+        if (bb1.intersectsSphere(bb2)) {
+            var vector = new THREE.Vector3();
+            camera.getWorldDirection(vector);
+            vector.normalize();
+        }
+    });
+
+
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);
 } //end of render
@@ -461,4 +532,4 @@ function getRndInteger(min, max) {
 main();
 
 
-// walking
+// walkingn

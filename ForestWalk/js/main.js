@@ -576,11 +576,6 @@ function render() {
 
         controls.moveRight(- velocity.x * timedelta);
         controls.moveForward(- velocity.z * timedelta);
-
-        let object = controls.getObject()
-
-        //object.position.y = 1 + smoothMap[Math.abs(Math.floor(object.position.x))][Math.abs(Math.floor(object.position.z))] || 1; //change off absolute
-
     }
 
     // simulate walking on top of the terrain
@@ -600,7 +595,6 @@ function render() {
         } else if (distance <= intersects[0].distance) {
             velo.y -= (timedelta);
         }
-
         camera.translateY(velo.y);
     }
 
@@ -615,12 +609,7 @@ function render() {
     const treeIntersects = raycaster2.intersectObjects(circleList, false);
 
     if (treeIntersects.length > 0) {
-        // test message
-        //console.log('intersecting with the black circles!');
-
-
         // implement changing tree opacity here
-
     }
 
     // check for collisions here

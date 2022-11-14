@@ -95,7 +95,7 @@ function initGraphics() {
         move = false;
     });
     flycontrols = new FlyControls(camera, document.body);
-    flycontrols.movementSpeed = 15;
+    flycontrols.movementSpeed = 30;
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -439,13 +439,37 @@ function initTerrain() {
     groundTerrain.receiveShadow = true;
 
     // flip the terrain rightside up
-    groundTerrain.rotation.set(-Math.PI / 2, 0, 0)
+    groundTerrain.rotation.set(-Math.PI / 2, 0, 0);
 
     // "walk" on top of the terrain
     raycaster = new THREE.Raycaster();
 
     // start in the middle of the terrain
-    camera.position.set(64, smoothMap[64][64] + 1, -64);
+    camera.position.set(64, smoothMap[64][64] + 2, -64);
+
+    // add walls
+    const wallGeometry = new THREE.PlaneGeometry(129, 20);
+    const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+    const wall1 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall3 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall1.translateX(129 / 2);
+    wall1.translateY(10);
+    scene.add(wall1);
+    wall2.rotation.set(0, Math.PI / 2, 0);
+    wall2.translateX(129 / 2);
+    wall2.translateY(10);
+    scene.add(wall2);
+    wall3.translateX(129 / 2);
+    wall3.translateZ(-128);
+    wall3.translateY(10);
+    scene.add(wall3);
+    wall4.rotation.set(0, Math.PI / 2, 0);
+    wall4.translateZ(128);
+    wall4.translateX(129 / 2);
+    wall4.translateY(10);
+    scene.add(wall4);
 } // end of initTerrain
 
 
@@ -454,7 +478,6 @@ function initTerrain() {
  * must be taken during a single render.
  */
 function render() {
-    console.log(camera.position)
     const deltaTime = clock.getDelta();
     if (move) {
         flycontrols.update(deltaTime * .5);

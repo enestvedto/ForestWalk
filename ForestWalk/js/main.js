@@ -525,8 +525,20 @@ function initTerrain() {
  */
 function render() {
     const deltaTime = clock.getDelta();
+
     if (move) {
-        flycontrols.update(deltaTime * .5);
+        if (forward) {
+            controls.moveForward(0.1);
+        }
+        if (left) {
+            controls.moveRight(-0.1);
+        }
+        if (right) {
+            controls.moveRight(0.1);
+        }
+        if (back) {
+            controls.moveForward(-0.1);
+        }
     }
 
     // simulate walking on top of the terrain

@@ -125,7 +125,7 @@ function initGraphics() {
     console.log(scene);
 
     //test tree
-    let t = generateTrinaryTree(5);
+    let t = generateTrinaryTree(2);
     console.log(t);
     scene.add(t);
     

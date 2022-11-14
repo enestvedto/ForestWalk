@@ -1,10 +1,13 @@
 import * as THREE from 'three';
-import { BufferGeometry, Euler, Line, LineSegments, Vector3 } from 'three';
+import { BufferGeometry, Euler, Group, Line, LineSegments, Vector3 } from 'three';
 
-const material = new THREE.LineBasicMaterial({
-	color: 0x000000,
+const angleY = (3 * Math.PI) / 2;
+const geometry = new THREE.BoxGeometry(1,4,1);
+const material = new THREE.MeshStandardMaterial({
+	color: 0x002211,
 });
-
+const branchMesh = new THREE.Mesh(geometry, material);
+branchMesh.castShadow = true;
 
 /*
  0: draw line segment ending in leaf
@@ -12,26 +15,19 @@ const material = new THREE.LineBasicMaterial({
  [: push position and angle, turn left by angle
  ]: pop position and angle, turn right by angle
  */
-function generateTrinaryTree(iteration, angle = Math.PI / 4, axiom = '0') {
+function generateTrinaryTree(iteration, angleZ = (Math.PI / 4), axiom = '0') {
     let sequence = generateTrinaryFractal(axiom, iteration);
     console.log(sequence);
 
-    let geometry = new THREE.BufferGeometry();
-    let vertices = [];
+    let tree = new THREE.Group();
     let curPos = [0,0,0];
     let curRot = new THREE.Euler(0,0,0);
+    let prevRot = new THREE.Euler(0,0,0);
     let stack = [];
     
     let width = new THREE.Vector3(1,0,0);
     let height = new THREE.Vector3(0,4,0);
     let depth = new THREE.Vector3(0,0,1);
-
-    let indicies = [0];
-    let idxTrail = []; //allows for moving cleanly beween lines
-    let curIdx = 0;
-    let vertexCount = 0;
-
-    vertices.push(curPos[0], curPos[1], curPos[2]);
 
     for (let i = 0; i < sequence.length; i++) {
         let char = sequence.charAt(i);
@@ -39,41 +35,44 @@ function generateTrinaryTree(iteration, angle = Math.PI / 4, axiom = '0') {
             case '0':
             case '1':
                 
-                let newHeight = height.clone();
-                newHeight.applyEuler(curRot);
+                let tempHeight = height.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(curRot);
 
-                let nextPos = [newHeight.x + curPos[0], newHeight.y + curPos[1], newHeight.z + curPos[2]];
-                vertices.push(nextPos[0], nextPos[1], nextPos[2]);
-                vertexCount++;
+                let nextPos = [tempHeight.x + curPos[0], tempHeight.y + curPos[1], tempHeight.z + curPos[2]]; 
+                
+                tempHeight = height.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(prevRot);
 
-                curIdx = vertexCount;
-                indicies.push(curIdx);
+                nextPos = [tempHeight.x + nextPos[0], tempHeight.y + nextPos[1], tempHeight.z + nextPos[2]]; 
+
+                let branch = branchMesh.clone();
+                branch.position.set(nextPos[0], nextPos[1], nextPos[2]);
+                branch.rotation.set(curRot.x, curRot.y, curRot.z);
+                tree.add(branch);
 
                 curPos = nextPos;
-
+                prevRot = curRot.clone();
                 break;
 
             case '[':
-                stack.push([curPos, curRot.clone(), curIdx]);
-                curRot.z += angle;
+                stack.push([curPos, curRot.clone()]);
+                curRot.z += angleZ;
                 break;
 
             case ']':
                 let data = stack.pop();
                 curPos = data[0];
                 curRot = data[1];
-                indicies.push(data[2]);
-                curRot.z -= angle;
+                prevRot = curRot.clone();
+                curRot.z -= angleZ;
                 break;
         }
 
     }
 
-    console.log(indicies);
-    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
-    geometry.setIndex( indicies );
-
-    return new Line(geometry, material);
+    return tree;
 }
 
 function generateTrinaryFractal(sequence, iteration) {

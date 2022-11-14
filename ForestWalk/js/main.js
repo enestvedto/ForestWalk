@@ -23,6 +23,7 @@ let groundTerrain;
 let reticle;
 let cameraSphere;
 let circleList;
+const treeList = [];
 
 // Graphics World Variables
 let skySystem;
@@ -129,9 +130,12 @@ function initGraphics() {
     console.log(scene);
 
     //test tree
-    let t = generateBarnsleyTree(6);
-    console.log(t);
-    scene.add(t);
+    for (let i = 0; i < 10; i++) {
+
+        let t = generateTrinaryTree(2);
+        scene.add(t);
+        treeList.push(t);
+    }
 
 
     //Renderer

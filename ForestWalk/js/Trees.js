@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { BufferGeometry, Euler, Group, Line, LineSegments, Vector3 } from 'three';
 
-const angleY = (3 * Math.PI) / 2;
-const geometry = new THREE.BoxGeometry(1, 4, 1);
+const branchDimension = {w: 1, h:4, d: 1}
+const geometry = new THREE.BoxGeometry(branchDimension.w, branchDimension.h, branchDimension.d);
 const material = new THREE.MeshStandardMaterial({
     color: 0x002211,
 });
@@ -15,19 +15,21 @@ branchMesh.castShadow = true;
  [: push position and angle, turn left by angle
  ]: pop position and angle, turn right by angle
  */
-function generateTrinaryTree(iteration, angleZ = (Math.PI / 4), axiom = '0') {
+function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
+    const angleY = (2*Math.PI)/3;
+
     let sequence = generateTrinaryFractal(axiom, iteration);
     console.log(sequence);
 
     let tree = new THREE.Group();
     let curPos = [0, 0, 0];
     let curRot = new THREE.Euler(0, 0, 0);
+    let curAngle = angle;
     let prevRot = new THREE.Euler(0, 0, 0);
     let stack = [];
+    let height = new THREE.Vector3(0, branchDimension.h, 0);
+    let branchScale = 1;
 
-    let width = new THREE.Vector3(1, 0, 0);
-    let height = new THREE.Vector3(0, 4, 0);
-    let depth = new THREE.Vector3(0, 0, 1);
 
     for (let i = 0; i < sequence.length; i++) {
         let char = sequence.charAt(i);
@@ -50,24 +52,48 @@ function generateTrinaryTree(iteration, angleZ = (Math.PI / 4), axiom = '0') {
                 let branch = branchMesh.clone();
                 branch.position.set(nextPos[0], nextPos[1], nextPos[2]);
                 branch.rotation.set(curRot.x, curRot.y, curRot.z);
+                branch.scale.set(branchScale, branchScale, branchScale);
+
                 tree.add(branch);
 
                 curPos = nextPos;
                 prevRot = curRot.clone();
+
+                height.multiplyScalar(0.75);
+                branchScale = branchScale * 0.75;
+
                 break;
 
             case '[':
-                stack.push([curPos, curRot.clone()]);
-                curRot.z += angleZ;
+                stack.push([curPos, curRot.clone(), curAngle, height.clone(), branchScale]);
                 break;
 
             case ']':
                 let data = stack.pop();
                 curPos = data[0];
+
                 curRot = data[1];
                 prevRot = curRot.clone();
-                curRot.z -= angleZ;
+
+                curAngle = data[2];
+
+                height = data[3];
+                branchScale = data[4];
+
+
                 break;
+            case '+':
+                curRot.z += curAngle;
+                break;
+
+            case '-':
+                curAngle = curAngle/2;
+                break;
+
+            case '*':
+                curRot.y += angleY;
+                break;
+
         }
 
     }
@@ -87,13 +113,16 @@ function generateTrinaryFractal(sequence, iteration) {
         let phrase = '';
         switch (char) {
             case '0':
-                phrase = '1[0]0';
+                phrase = '1[+0]*[+0]*[+0]';
                 break;
             case '1':
                 phrase = '11';
                 break;
             case '[':
             case ']':
+            case '+':
+            case '-':
+            case '*':
                 phrase = char;
                 break;
         }

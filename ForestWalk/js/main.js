@@ -24,6 +24,10 @@ let raycaster;
 let groundTerrain;
 let reticle;
 let cameraSphere;
+let forward;
+let right;
+let back;
+let left;
 
 let circleList;
 
@@ -96,6 +100,48 @@ function initGraphics() {
     });
     flycontrols = new FlyControls(camera, document.body);
     flycontrols.movementSpeed = 30;
+
+    document.onkeydown = function (e) {
+        switch (e.key) {
+            case 'W':
+            case 'w':
+                forward = true;
+                break;
+            case 'S':
+            case 's':
+                back = true;
+                break;
+            case 'D':
+            case 'd':
+                right = true;
+                break;
+            case 'A':
+            case 'a':
+                left = true;
+                break;
+        }
+    };
+
+    document.onkeyup = function (e) {
+        switch (e.key) {
+            case 'W':
+            case 'w':
+                forward = false;
+                break;
+            case 'S':
+            case 's':
+                back = false;
+                break;
+            case 'D':
+            case 'd':
+                right = false;
+                break;
+            case 'A':
+            case 'a':
+                left = false;
+                break;
+        }
+    };
 
     //Renderer
     renderer = new THREE.WebGLRenderer({

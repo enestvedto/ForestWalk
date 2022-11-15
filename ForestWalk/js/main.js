@@ -22,7 +22,8 @@ let raycaster;
 let groundTerrain;
 let reticle;
 let cameraSphere;
-let circleList;
+
+let circleList = [];
 
 // Graphics World Variables
 let skySystem;
@@ -184,7 +185,7 @@ function initControls() {
     reticle.position.set(0, 0, -.2);
 
     // camera sphere
-    const cameraGeometry = new THREE.SphereGeometry(2);
+    const cameraGeometry = new THREE.SphereGeometry(1);
     const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
     camera.add(cameraSphere);
@@ -207,7 +208,6 @@ function initControls() {
     scene.add(s4);
     s4.translateZ(-5)
     scene.add(s5);
-    circleList = [];
     circleList.push(s1);
     circleList.push(s2);
     circleList.push(s3);
@@ -546,12 +546,65 @@ function initTerrain() {
     groundTerrain.receiveShadow = true;
 
     // flip the terrain rightside up
-    groundTerrain.rotation.set(-Math.PI / 2, 0, 0)
-    groundTerrain.translateX(-width / 2);
+    groundTerrain.rotation.set(-Math.PI / 2, 0, 0);
 
     // "walk" on top of the terrain
     raycaster = new THREE.Raycaster();
+
+    // start in the middle of the terrain
+    camera.position.set(64, smoothMap[64][64] + 2, -64);
+
+    // add walls
+    const wallGeometry = new THREE.PlaneGeometry(129, 20);
+    const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+    const wall1 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall3 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall1.translateX(129 / 2);
+    wall1.translateY(10);
+    scene.add(wall1);
+    wall2.rotation.set(0, Math.PI / 2, 0);
+    wall2.translateX(129 / 2);
+    wall2.translateY(10);
+    scene.add(wall2);
+    wall3.translateX(129 / 2);
+    wall3.translateZ(-128);
+    wall3.translateY(10);
+    scene.add(wall3);
+    wall4.rotation.set(0, Math.PI / 2, 0);
+    wall4.translateZ(128);
+    wall4.translateX(129 / 2);
+    wall4.translateY(10);
+    scene.add(wall4);
+
+    circleList.push(wall1);
+    circleList.push(wall2);
+    circleList.push(wall3);
+    circleList.push(wall4);
+
 } // end of initTerrain
+
+function isCollision() {
+    var collision = false;
+    // check for collisions here
+    circleList.forEach(item => {
+        cameraSphere.geometry.computeBoundingBox();
+        cameraSphere.updateMatrixWorld();
+        var bb1 = cameraSphere.geometry.boundingBox.clone();
+        bb1.applyMatrix4(cameraSphere.matrixWorld);
+        // if there is an intersection then refuse the size
+        item.geometry.computeBoundingBox();
+        item.updateMatrixWorld();
+        var bb2 = item.geometry.boundingBox.clone();
+        bb2.applyMatrix4(item.matrixWorld);
+        // if there is a collision, stop movement
+        if (bb1.intersectsBox(bb2)) {
+            collision = true;
+        }
+    });
+    return collision;
+}
 
 
 /**
@@ -560,22 +613,49 @@ function initTerrain() {
  */
 function render() {
     const timedelta = clock.getDelta();
+    /*
+        if (move) {
+            skySystem.rotation.z += timedelta * 0.1;
+    
+            velocity.x -= velocity.x * 15.0 * timedelta;
+            velocity.z -= velocity.z * 15.0 * timedelta;
+    
+            direction.z = Number(forward) - Number(back);
+            direction.x = Number(right) - Number(left);
+            direction.normalize();
+    
+            if (forward || back) velocity.z -= direction.z * 100.0 * timedelta;
+            if (left || right) velocity.x -= direction.x * 100.0 * timedelta;
+    
+            controls.moveRight(- velocity.x * timedelta);
+            controls.moveForward(- velocity.z * timedelta);*/
+    const deltaTime = clock.getDelta();
 
     if (move) {
-        skySystem.rotation.z += timedelta * 0.1;
-
-        velocity.x -= velocity.x * 15.0 * timedelta;
-        velocity.z -= velocity.z * 15.0 * timedelta;
-
-        direction.z = Number(forward) - Number(back);
-        direction.x = Number(right) - Number(left);
-        direction.normalize();
-
-        if (forward || back) velocity.z -= direction.z * 100.0 * timedelta;
-        if (left || right) velocity.x -= direction.x * 100.0 * timedelta;
-
-        controls.moveRight(- velocity.x * timedelta);
-        controls.moveForward(- velocity.z * timedelta);
+        if (forward) {
+            controls.moveForward(0.5);
+            if (isCollision()) {
+                controls.moveForward(-0.5);
+            }
+        }
+        if (left) {
+            controls.moveRight(-0.5);
+            if (isCollision()) {
+                controls.moveRight(0.5);
+            }
+        }
+        if (right) {
+            controls.moveRight(0.5);
+            if (isCollision()) {
+                controls.moveRight(-0.5);
+            }
+        }
+        if (back) {
+            controls.moveForward(0.5);
+            if (isCollision()) {
+                controls.moveForward(-0.5);
+            }
+        }
     }
 
     // simulate walking on top of the terrain
@@ -586,14 +666,14 @@ function render() {
     if (intersects.length > 0) {
         var delta = distance - intersects[0].distance;
         //new position is higher so you need to move you object upwards
-        if (distance > intersects[0].distance) {
+        if (distance >= intersects[0].distance) {
             camera.position.y += (delta);
         }
         //gravity and prevent falling through floor
-        if (distance >= intersects[0].distance && velo.y <= 0) {
-            velo.y = 0;
-        } else if (distance <= intersects[0].distance) {
-            velo.y -= (timedelta);
+        if (distance >= intersects[0].distance && velocity.y <= 0) {
+            velocity.y = 0;
+        } else if (distance < intersects[0].distance) {
+            velocity.y += (delta);
         }
         camera.translateY(velo.y);
     }
@@ -610,26 +690,8 @@ function render() {
 
     if (treeIntersects.length > 0) {
         // implement changing tree opacity here
+        console.log('raycast');
     }
-
-    // check for collisions here
-    circleList.forEach(circle => {
-        cameraSphere.geometry.computeBoundingSphere();
-        cameraSphere.updateMatrixWorld();
-        var bb1 = cameraSphere.geometry.boundingSphere.clone();
-        bb1.applyMatrix4(cameraSphere.matrixWorld);
-        // if there is an intersection then refuse the size
-        circle.geometry.computeBoundingSphere();
-        circle.updateMatrixWorld();
-        var bb2 = circle.geometry.boundingSphere.clone();
-        bb2.applyMatrix4(circle.matrixWorld);
-        // if there is a collision, stop movement
-        if (bb1.intersectsSphere(bb2)) {
-            var vector = new THREE.Vector3();
-            camera.getWorldDirection(vector);
-            vector.normalize();
-        }
-    });
 
 
     renderer.render(scene, camera);

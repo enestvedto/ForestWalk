@@ -2,6 +2,7 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { generateBarnsleyTree, generateTrinaryTree } from './Trees';
+import { BoxGeometry, MeshStandardMaterial } from 'three';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -29,7 +30,7 @@ let children = []; //children of tree group
 let skySystem;
 let sun;
 let moon;
-let directionalLight, directionalLight2;
+let sunLight, moonLight;
 
 //Player and Controls
 let forward = false;
@@ -97,23 +98,22 @@ function initGraphics() {
     skySystem.scale.set(7,7,7);
 
     //DirectionalLights and Target
-    directionalLight = new THREE.DirectionalLight(0xfdfbd3);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
-    directionalLight.target = moon;
+    sunLight = new THREE.PointLight(0xfdfbd3);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sun.add(sunLight);
 
-    directionalLight2 = new THREE.DirectionalLight(0xc2c5cc, 0.5);
-    directionalLight2.castShadow = true;
-    scene.add(directionalLight2);
-    directionalLight2.target = sun;
+    moonLight = new THREE.PointLight(0xc2c5cc, 0.5);
+    //directionalLight2.castShadow = true;
+    moon.add(moonLight);
 
 
     // flashlight
-    const flashlight = new THREE.SpotLight(0xffffff, 3, 40, Math.PI / 10, 0.75, 2);
+    const flashlight = new THREE.SpotLight(0xffffff, 1, 40, Math.PI / 10, 0.75, 2);
     camera.add(flashlight);
     flashlight.position.set(0, 0, 1);
     flashlight.target = camera;
-
 
     // clock
     clock = new THREE.Clock();
@@ -132,7 +132,7 @@ function initGraphics() {
     for (let i = 0; i < 50; i++) {
 
         let t = generateTrinaryTree(4);
-        console.log(t);
+        t.castShadow = true;
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1, -z);
@@ -514,8 +514,9 @@ function initTerrain() {
     });
     geometry.computeVertexNormals();
     groundTerrain = new THREE.Mesh(geometry, grass);
-    scene.add(groundTerrain);
     groundTerrain.receiveShadow = true;
+    scene.add(groundTerrain);
+
 
     // flip the terrain rightside up
     groundTerrain.rotation.set(-Math.PI / 2, 0, 0);
@@ -588,7 +589,7 @@ function render() {
     const deltaTime = clock.getDelta();
 
     if (move) {
-        skySystem.rotation.z += deltaTime * 0.1;
+        skySystem.rotation.z += deltaTime * 0.05;
 
         velo.x -= velo.x * 10 * deltaTime;
         velo.z -= velo.z * 10 * deltaTime;

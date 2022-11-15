@@ -157,7 +157,7 @@ function generateTrinaryFractal(sequence, iteration) {
             case '1':
                 r = Math.random();
 
-                if ( r < 0.3333)
+                if ( r < 0.5)
                     phrase = '11';
                 else
                     phrase = '1';

@@ -130,9 +130,9 @@ function initGraphics() {
     console.log(scene);
 
     //test tree
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 1; i++) {
 
-        let t = generateTrinaryTree(2);
+        let t = generateTrinaryTree(3);
         scene.add(t);
         treeList.push(t);
     }

@@ -2,12 +2,21 @@ import * as THREE from 'three';
 import { BufferGeometry, Euler, Group, Line, LineSegments, Vector3 } from 'three';
 
 const branchDimension = {w: 0.5, h:2, d: 0.5}
-const geometry = new THREE.BoxGeometry(branchDimension.w, branchDimension.h, branchDimension.d);
-const material = new THREE.MeshStandardMaterial({
-    color: 0x002211,
+const branchGeometry = new THREE.BoxGeometry(branchDimension.w, branchDimension.h, branchDimension.d);
+const branchMaterial = new THREE.MeshStandardMaterial({
+    color: 0x725C42,
 });
-const branchMesh = new THREE.Mesh(geometry, material);
+const branchMesh = new THREE.Mesh(branchGeometry, branchMaterial);
 branchMesh.castShadow = true;
+
+const leafDimension = {w:2, h:2, d:2}
+const leafGeometry = new THREE.BoxGeometry(leafDimension.w, leafDimension.h, leafDimension.d);
+const leafMaterial = new THREE.MeshStandardMaterial({
+    color: 0x3A5F0B,
+});
+
+const leafMesh = new THREE.Mesh(leafGeometry, leafMaterial);
+leafMesh.castShadow = true;
 
 /*
  0: draw line segment ending in leaf
@@ -36,6 +45,7 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
         switch (char) {
             case '0':
             case '1':
+            case 't':
 
                 let tempHeight = height.clone();
                 tempHeight.divideScalar(2);
@@ -53,34 +63,41 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
                 branch.position.set(nextPos[0], nextPos[1], nextPos[2]);
                 branch.rotation.set(curRot.x, curRot.y, curRot.z);
                 branch.scale.set(branchScale, branchScale, branchScale);
-
                 tree.add(branch);
+
+                if(char === '0' || char === 't') //LEAF CODE
+                {
+                    tempHeight = height.clone();
+                    tempHeight.divideScalar(2);
+                    tempHeight.applyEuler(curRot);
+
+                    let leaf = leafMesh.clone();
+                    leaf.position.set(nextPos[0] + tempHeight.x, nextPos[1] + tempHeight.y, nextPos[2] + tempHeight.z);
+                    leaf.rotation.set(curRot.x, curRot.y, curRot.z);
+                    tree.add(leaf);
+                }
 
                 curPos = nextPos;
                 prevRot = curRot.clone();
 
+
                 break;
 
             case '[':
-                console.log('push');
                 stack.push([curPos, curRot.clone(), prevRot.clone(), curAngle, height.clone(), branchScale]);
-
-                console.log(prevRot.y, prevRot.z);
                 
-                height.multiplyScalar(0.75);
+                height.multiplyScalar(0.9);
                 branchScale = branchScale * 0.9;
 
                 break;
 
             case ']':
-                console.log('pop');
 
                 let data = stack.pop();
                 curPos = data[0];
 
                 curRot = data[1];
                 prevRot = data[2];
-                console.log(prevRot.y, prevRot.z);
 
                 curAngle = data[3];
 
@@ -94,7 +111,7 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
                 break;
 
             case '-':
-                curAngle = curAngle * 0.75;
+                curRot.z -= curAngle * 0.5;
                 break;
 
             case '*':
@@ -118,11 +135,32 @@ function generateTrinaryFractal(sequence, iteration) {
     for (let i = 0; i < sequence.length; i++) {
         let char = sequence.charAt(i);
         let phrase = '';
+        let r = 0;
+
         switch (char) {
             case '0':
-                phrase = '1[-+0]*[-+0]*[-+0]';
+                r = Math.random();
+                
+                if( 0.000 <= r < 0.010 )
+                    phrase = t;
+                else if( 0.010 <= r < 0.250)
+                    phrase = '1[+-0]*[+-0]*';
+                else if( 0.25 <= r < 0.325)
+                    phrase = '1[+-0]**[+-0]';
+                else if( 0.325 <= r < 0.500)
+                    phrase = '1*[+-0]*[+-0]';
+                else if( 0.500 <= r < 0.625)
+                    phrase = '1[+-0]**';
+                else if( 0.625 <= r < 0.750)
+                    phrase = '1*[+-0]*';
+                else if( 0.750 <= r < 0.825)
+                    phrase = '1[+-0]**';
+                else
+                    phrase = '1[+-0]*[+-0]*[+-0]';
+
                 break;
             case '1':
+                r = Math.random();
                 phrase = '11';
                 break;
             case '[':
@@ -130,6 +168,7 @@ function generateTrinaryFractal(sequence, iteration) {
             case '+':
             case '-':
             case '*':
+            case 't':
                 phrase = char;
                 break;
         }

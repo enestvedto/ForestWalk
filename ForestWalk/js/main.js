@@ -556,27 +556,27 @@ function render() {
     if (move) {
         if (forward) {
             controls.moveForward(0.5);
-            /*if (isCollision()) {
+            if (isCollision()) {
                 controls.moveForward(-0.5);
-            }*/
+            }
         }
         if (left) {
             controls.moveRight(-0.5);
-            /*if (isCollision()) {
+            if (isCollision()) {
                 controls.moveRight(0.5);
-            }*/
+            }
         }
         if (right) {
             controls.moveRight(0.5);
-            /*if (isCollision()) {
+            if (isCollision()) {
                 controls.moveRight(-0.5);
-            }*/
+            }
         }
         if (back) {
-            controls.moveForward(-0.5);
-            /*if (isCollision()) {
-                controls.moveForward(0.5);
-            }*/
+            controls.moveForward(0.5);
+            if (isCollision()) {
+                controls.moveForward(-0.5);
+            }
         }
     }
 

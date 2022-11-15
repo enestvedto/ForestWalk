@@ -1,7 +1,7 @@
 import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { generateBarnsleyTree, generateTrinaryTree } from './Trees';
+import { generateBarnsleyTree, generatePineTree, generateTrinaryTree } from './Trees';
 import { BoxGeometry, MeshStandardMaterial } from 'three';
 
 //Dom elements
@@ -131,7 +131,7 @@ function initGraphics() {
     //test tree
     for (let i = 0; i < 50; i++) {
 
-        let t = generateTrinaryTree(4);
+        let t = generatePineTree(3);
         t.castShadow = true;
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
@@ -643,7 +643,6 @@ function render() {
 
     if (treeIntersects.length > 0) {
         // implement changing tree opacity here
-        console.log(treeIntersects[0].object.parent);
         children = treeIntersects[0].object.parent.children;
         
         children.forEach(element => {

@@ -29,7 +29,7 @@ let right;
 let back;
 let left;
 
-let circleList;
+let circleList = [];
 
 /**
  * Startup Function
@@ -166,10 +166,11 @@ function initGraphics() {
     reticle.position.set(0, 0, -.2);
 
     // camera sphere
-    const cameraGeometry = new THREE.SphereGeometry(2);
+    const cameraGeometry = new THREE.SphereGeometry(1);
     const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
     camera.add(cameraSphere);
+
 
     // random shapes for raycast detection
     const g = new THREE.SphereGeometry(1);
@@ -188,7 +189,6 @@ function initGraphics() {
     scene.add(s4);
     s4.translateZ(-5)
     scene.add(s5);
-    circleList = [];
     circleList.push(s1);
     circleList.push(s2);
     circleList.push(s3);
@@ -516,7 +516,34 @@ function initTerrain() {
     wall4.translateX(129 / 2);
     wall4.translateY(10);
     scene.add(wall4);
+
+    circleList.push(wall1);
+    circleList.push(wall2);
+    circleList.push(wall3);
+    circleList.push(wall4);
+
 } // end of initTerrain
+
+function isCollision() {
+    var collision = false;
+    // check for collisions here
+    circleList.forEach(item => {
+        cameraSphere.geometry.computeBoundingBox();
+        cameraSphere.updateMatrixWorld();
+        var bb1 = cameraSphere.geometry.boundingBox.clone();
+        bb1.applyMatrix4(cameraSphere.matrixWorld);
+        // if there is an intersection then refuse the size
+        item.geometry.computeBoundingBox();
+        item.updateMatrixWorld();
+        var bb2 = item.geometry.boundingBox.clone();
+        bb2.applyMatrix4(item.matrixWorld);
+        // if there is a collision, stop movement
+        if (bb1.intersectsBox(bb2)) {
+            collision = true;
+        }
+    });
+    return collision;
+}
 
 
 /**
@@ -528,16 +555,28 @@ function render() {
 
     if (move) {
         if (forward) {
-            controls.moveForward(0.1);
+            controls.moveForward(0.5);
+            /*if (isCollision()) {
+                controls.moveForward(-0.5);
+            }*/
         }
         if (left) {
-            controls.moveRight(-0.1);
+            controls.moveRight(-0.5);
+            /*if (isCollision()) {
+                controls.moveRight(0.5);
+            }*/
         }
         if (right) {
-            controls.moveRight(0.1);
+            controls.moveRight(0.5);
+            /*if (isCollision()) {
+                controls.moveRight(-0.5);
+            }*/
         }
         if (back) {
-            controls.moveForward(-0.1);
+            controls.moveForward(-0.5);
+            /*if (isCollision()) {
+                controls.moveForward(0.5);
+            }*/
         }
     }
 
@@ -562,43 +601,6 @@ function render() {
         camera.translateY(velocity.y);
     }
 
-
-    // find intersections with trees
-    var vector = new THREE.Vector3(0, 0, -1);
-    vector = camera.localToWorld(vector);
-    // make vector a unit vector with the same direction as the camera
-    vector.sub(camera.position);
-
-    var raycaster2 = new THREE.Raycaster(camera.position, vector);
-    const treeIntersects = raycaster2.intersectObjects(circleList, false);
-
-    if (treeIntersects.length > 0) {
-        // test message
-        //console.log('intersecting with the black circles!');
-
-
-        // implement changing tree opacity here
-
-    }
-
-    // check for collisions here
-    circleList.forEach(circle => {
-        cameraSphere.geometry.computeBoundingSphere();
-        cameraSphere.updateMatrixWorld();
-        var bb1 = cameraSphere.geometry.boundingSphere.clone();
-        bb1.applyMatrix4(cameraSphere.matrixWorld);
-        // if there is an intersection then refuse the size
-        circle.geometry.computeBoundingSphere();
-        circle.updateMatrixWorld();
-        var bb2 = circle.geometry.boundingSphere.clone();
-        bb2.applyMatrix4(circle.matrixWorld);
-        // if there is a collision, stop movement
-        if (bb1.intersectsSphere(bb2)) {
-            var vector = new THREE.Vector3();
-            camera.getWorldDirection(vector);
-            vector.normalize();
-        }
-    });
 
 
     renderer.render(scene, camera);

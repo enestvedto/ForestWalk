@@ -1,10 +1,22 @@
 import * as THREE from 'three';
-import { BufferGeometry, Euler, Line, LineSegments, Vector3 } from 'three';
+import { BufferGeometry, Euler, Group, Line, LineSegments, Vector3 } from 'three';
 
-const material = new THREE.LineBasicMaterial({
-	color: 0x000000,
+const branchDimension = {w: 0.5, h:2, d: 0.5}
+const branchGeometry = new THREE.BoxGeometry(branchDimension.w, branchDimension.h, branchDimension.d);
+const branchMaterial = new THREE.MeshStandardMaterial({
+    color: 0x725C42,
+});
+const branchMesh = new THREE.Mesh(branchGeometry, branchMaterial);
+branchMesh.castShadow = true;
+
+const leafDimension = {w:2, h:2, d:2}
+const leafGeometry = new THREE.BoxGeometry(leafDimension.w, leafDimension.h, leafDimension.d);
+const leafMaterial = new THREE.MeshStandardMaterial({
+    color: 0x3A5F0B,
 });
 
+const leafMesh = new THREE.Mesh(leafGeometry, leafMaterial);
+leafMesh.castShadow = true;
 
 /*
  0: draw line segment ending in leaf
@@ -12,68 +24,105 @@ const material = new THREE.LineBasicMaterial({
  [: push position and angle, turn left by angle
  ]: pop position and angle, turn right by angle
  */
-function generateTrinaryTree(iteration, angle = Math.PI / 4, axiom = '0') {
+function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
+    const angleY = (2*Math.PI)/3;
+
     let sequence = generateTrinaryFractal(axiom, iteration);
     console.log(sequence);
 
-    let geometry = new THREE.BufferGeometry();
-    let vertices = [];
-    let curPos = [0,0,0];
-    let curRot = new THREE.Euler(0,0,0);
+    let tree = new THREE.Group();
+    let curPos = [0, 0, 0];
+    let curRot = new THREE.Euler(0, 0, 0);
+    let curAngle = angle;
+    let prevRot = new THREE.Euler(0, 0, 0);
     let stack = [];
-    
-    let width = new THREE.Vector3(1,0,0);
-    let height = new THREE.Vector3(0,4,0);
-    let depth = new THREE.Vector3(0,0,1);
+    let height = new THREE.Vector3(0, branchDimension.h, 0);
+    let branchScale = 1;
 
-    let indicies = [0];
-    let idxTrail = []; //allows for moving cleanly beween lines
-    let curIdx = 0;
-    let vertexCount = 0;
-
-    vertices.push(curPos[0], curPos[1], curPos[2]);
 
     for (let i = 0; i < sequence.length; i++) {
         let char = sequence.charAt(i);
         switch (char) {
             case '0':
             case '1':
-                
-                let newHeight = height.clone();
-                newHeight.applyEuler(curRot);
+            case 't':
 
-                let nextPos = [newHeight.x + curPos[0], newHeight.y + curPos[1], newHeight.z + curPos[2]];
-                vertices.push(nextPos[0], nextPos[1], nextPos[2]);
-                vertexCount++;
+                let tempHeight = height.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(curRot);
 
-                curIdx = vertexCount;
-                indicies.push(curIdx);
+                let nextPos = [tempHeight.x + curPos[0], tempHeight.y + curPos[1], tempHeight.z + curPos[2]];
+
+                tempHeight = height.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(prevRot);
+
+                nextPos = [tempHeight.x + nextPos[0], tempHeight.y + nextPos[1], tempHeight.z + nextPos[2]];
+
+                let branch = branchMesh.clone();
+                branch.position.set(nextPos[0], nextPos[1], nextPos[2]);
+                branch.rotation.set(curRot.x, curRot.y, curRot.z);
+                branch.scale.set(branchScale, branchScale, branchScale);
+                tree.add(branch);
+
+                if(char === '0' || char === 't') //LEAF CODE
+                {
+                    tempHeight = height.clone();
+                    tempHeight.divideScalar(2);
+                    tempHeight.applyEuler(curRot);
+
+                    let leaf = leafMesh.clone();
+                    leaf.position.set(nextPos[0] + tempHeight.x, nextPos[1] + tempHeight.y, nextPos[2] + tempHeight.z);
+                    leaf.rotation.set(curRot.x, curRot.y, curRot.z);
+                    tree.add(leaf);
+                }
 
                 curPos = nextPos;
+                prevRot = curRot.clone();
+
 
                 break;
 
             case '[':
-                stack.push([curPos, curRot.clone(), curIdx]);
-                curRot.z += angle;
+                stack.push([curPos, curRot.clone(), prevRot.clone(), curAngle, height.clone(), branchScale]);
+                
+                height.multiplyScalar(0.9);
+                branchScale = branchScale * 0.9;
+
                 break;
 
             case ']':
+
                 let data = stack.pop();
                 curPos = data[0];
+
                 curRot = data[1];
-                indicies.push(data[2]);
-                curRot.z -= angle;
+                prevRot = data[2];
+
+                curAngle = data[3];
+
+                height = data[4];
+                branchScale = data[5];
+
+
                 break;
+            case '+':
+                curRot.z += curAngle;
+                break;
+
+            case '-':
+                curRot.z -= curAngle * 0.5;
+                break;
+
+            case '*':
+                curRot.y += angleY;
+                break;
+
         }
 
     }
 
-    console.log(indicies);
-    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
-    geometry.setIndex( indicies );
-
-    return new Line(geometry, material);
+    return tree;
 }
 
 function generateTrinaryFractal(sequence, iteration) {
@@ -86,18 +135,41 @@ function generateTrinaryFractal(sequence, iteration) {
     for (let i = 0; i < sequence.length; i++) {
         let char = sequence.charAt(i);
         let phrase = '';
+        let r = 0;
+
         switch (char) {
             case '0':
-                phrase = '1[0]0';
+                r = Math.random();
+                
+                if( 0.000 <= r < 0.010 )
+                    phrase = t;
+                else if( 0.010 <= r < 0.250)
+                    phrase = '1[+-0]*[+-0]*';
+                else if( 0.25 <= r < 0.325)
+                    phrase = '1[+-0]**[+-0]';
+                else if( 0.325 <= r < 0.500)
+                    phrase = '1*[+-0]*[+-0]';
+                else if( 0.500 <= r < 0.625)
+                    phrase = '1[+-0]**';
+                else if( 0.625 <= r < 0.750)
+                    phrase = '1*[+-0]*';
+                else if( 0.750 <= r < 0.825)
+                    phrase = '1[+-0]**';
+                else
+                    phrase = '1[+-0]*[+-0]*[+-0]';
+
                 break;
             case '1':
+                r = Math.random();
                 phrase = '11';
                 break;
             case '[':
-                phrase = '[';
-                break;
             case ']':
-                phrase = ']';
+            case '+':
+            case '-':
+            case '*':
+            case 't':
+                phrase = char;
                 break;
         }
         newSequence += phrase;
@@ -108,4 +180,101 @@ function generateTrinaryFractal(sequence, iteration) {
     return generateTrinaryFractal(sequence, iteration);
 }
 
+function generateBarnsleyTree(iterations, angle = 25 * (Math.PI / 180), axiom = 'X') {
+    let sequence = generateBarnsleyFractal(axiom, iterations);
+    console.log(sequence);
+
+    let tree = new THREE.Group();
+    let curPos = [0, 0, 0];
+    let curRot = new THREE.Euler(0, 0, 0);
+    let prevRot = new THREE.Euler(0, 0, 0);
+    let stack = [];
+
+    let height = new THREE.Vector3(0, branchDimension.h, 0);
+
+    for (let i = 0; i < sequence.length; i++) {
+        let char = sequence.charAt(i);
+        switch (char) {
+            case 'F':
+
+                let tempHeight = height.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(curRot);
+
+                let nextPos = [tempHeight.x + curPos[0], tempHeight.y + curPos[1], tempHeight.z + curPos[2]];
+
+                tempHeight = height.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(prevRot);
+
+                nextPos = [tempHeight.x + nextPos[0], tempHeight.y + nextPos[1], tempHeight.z + nextPos[2]];
+
+                let branch = branchMesh.clone();
+                branch.position.set(nextPos[0], nextPos[1], nextPos[2]);
+                branch.rotation.set(curRot.x, curRot.y, curRot.z);
+                tree.add(branch);
+
+                curPos = nextPos;
+                prevRot = curRot.clone();
+                break;
+
+            case '[':
+                stack.push([curPos, curRot.clone()]);
+
+                break;
+
+            case ']':
+                let data = stack.pop();
+                curPos = data[0];
+                curRot = data[1];
+                prevRot = curRot.clone();
+                break;
+
+            case '+':
+                curRot.z += angle;
+                break;
+            case '-':
+                curRot.z -= angle;
+                break;
+
+        }
+
+    }
+
+    return tree;
+}
+
+function generateBarnsleyFractal(sequence, iteration) {
+    if (iteration == 0) {
+        return sequence;
+    }
+
+    let newSequence = '';
+    for (let i = 0; i < sequence.length; i++) {
+        let char = sequence.charAt(i);
+        let phrase = '';
+        switch (char) {
+            case 'X':
+                phrase = 'F+[[X]-X]-F[-FX]+X';
+                break;
+            case 'F':
+                phrase = 'FF';
+                break;
+            case '[':
+            case ']':
+            case '+':
+            case '-':
+                phrase = char;
+                break;
+        }
+        newSequence += phrase;
+    }
+
+    sequence = newSequence;
+    iteration--;
+
+    return generateBarnsleyFractal(sequence, iteration);
+}
+
 export { generateTrinaryTree }
+export { generateBarnsleyTree }

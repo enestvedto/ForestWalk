@@ -131,7 +131,7 @@ function initGraphics() {
     //test tree
     for (let i = 0; i < 50; i++) {
 
-        let t = generateTrinaryTree(3);
+        let t = generateTrinaryTree(4);
         console.log(t);
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;

@@ -19,7 +19,7 @@ const leafMaterial = new THREE.MeshStandardMaterial({
  [: push position and angle, turn left by angle
  ]: pop position and angle, turn right by angle
  */
-function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
+function generateTrinaryTree(iteration, angle = (Math.PI / 5), axiom = '0') {
     const angleY = (2*Math.PI)/3;
 
     let sequence = generateTrinaryFractal(axiom, iteration);
@@ -156,7 +156,12 @@ function generateTrinaryFractal(sequence, iteration) {
                 break;
             case '1':
                 r = Math.random();
-                phrase = '11';
+
+                if ( r < 0.3333)
+                    phrase = '11';
+                else
+                    phrase = '1';
+
                 break;
             case '[':
             case ']':
@@ -269,6 +274,16 @@ function generateBarnsleyFractal(sequence, iteration) {
     iteration--;
 
     return generateBarnsleyFractal(sequence, iteration);
+}
+
+function generatePineTree()
+{
+    
+}
+
+function generatePineTreeFractal()
+{
+
 }
 
 export { generateTrinaryTree }

@@ -6,17 +6,12 @@ const branchGeometry = new THREE.BoxGeometry(branchDimension.w, branchDimension.
 const branchMaterial = new THREE.MeshStandardMaterial({
     color: 0x725C42,
 });
-const branchMesh = new THREE.Mesh(branchGeometry, branchMaterial);
-branchMesh.castShadow = true;
 
 const leafDimension = {w:2, h:2, d:2}
 const leafGeometry = new THREE.BoxGeometry(leafDimension.w, leafDimension.h, leafDimension.d);
 const leafMaterial = new THREE.MeshStandardMaterial({
     color: 0x3A5F0B,
 });
-
-const leafMesh = new THREE.Mesh(leafGeometry, leafMaterial);
-leafMesh.castShadow = true;
 
 /*
  0: draw line segment ending in leaf
@@ -59,7 +54,8 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
 
                 nextPos = [tempHeight.x + nextPos[0], tempHeight.y + nextPos[1], tempHeight.z + nextPos[2]];
 
-                let branch = branchMesh.clone();
+                let branch = new THREE.Mesh(branchGeometry.clone(), branchMaterial.clone());
+                branch.castShadow = true;
                 branch.position.set(nextPos[0], nextPos[1], nextPos[2]);
                 branch.rotation.set(curRot.x, curRot.y, curRot.z);
                 branch.scale.set(branchScale, branchScale, branchScale);
@@ -71,7 +67,8 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
                     tempHeight.divideScalar(2);
                     tempHeight.applyEuler(curRot);
 
-                    let leaf = leafMesh.clone();
+                    let leaf = new THREE.Mesh(leafGeometry.clone(), leafMaterial.clone());
+                    leaf.castShadow = true;
                     leaf.position.set(nextPos[0] + tempHeight.x, nextPos[1] + tempHeight.y, nextPos[2] + tempHeight.z);
                     leaf.rotation.set(curRot.x, curRot.y, curRot.z);
                     tree.add(leaf);
@@ -103,8 +100,7 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
 
                 height = data[4];
                 branchScale = data[5];
-
-
+                
                 break;
             case '+':
                 curRot.z += curAngle;

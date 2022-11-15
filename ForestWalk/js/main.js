@@ -23,6 +23,7 @@ let groundTerrain;
 let reticle;
 let cameraSphere;
 const treeList = [];
+let children = []; //children of tree group
 
 // Graphics World Variables
 let skySystem;
@@ -160,28 +161,7 @@ function initGraphics() {
     camera.translateY(10);
 
     // random shapes for raycast detection
-    const g = new THREE.SphereGeometry(1);
-    const m = new THREE.MeshBasicMaterial({ color: 0xf0000 });
-    const s1 = new THREE.Mesh(g, m);
-    const s2 = new THREE.Mesh(g, m);
-    const s3 = new THREE.Mesh(g, m);
-    const s4 = new THREE.Mesh(g, m);
-    const s5 = new THREE.Mesh(g, m);
-    scene.add(s1);
-    s1.translateX(5)
-    scene.add(s2);
-    s2.translateX(-5)
-    scene.add(s3);
-    s3.translateZ(5)
-    scene.add(s4);
-    s4.translateZ(-5)
-    scene.add(s5);
-    circleList = [];
-    circleList.push(s1);
-    circleList.push(s2);
-    circleList.push(s3);
-    circleList.push(s4);
-    circleList.push(s5);
+
 
 } //end of initGraphics
 
@@ -569,17 +549,17 @@ function initTerrain() {
     wall4.translateY(10);
     scene.add(wall4);
 
-    circleList.push(wall1);
-    circleList.push(wall2);
-    circleList.push(wall3);
-    circleList.push(wall4);
+    //circleList.push(wall1);
+    //circleList.push(wall2);
+    //circleList.push(wall3);
+    //circleList.push(wall4);
 
 } // end of initTerrain
 
 function isCollision() {
     var collision = false;
     // check for collisions here
-    circleList.forEach(item => {
+    /*treeList.forEach(item => {
         cameraSphere.geometry.computeBoundingBox();
         cameraSphere.updateMatrixWorld();
         var bb1 = cameraSphere.geometry.boundingBox.clone();
@@ -594,6 +574,7 @@ function isCollision() {
             collision = true;
         }
     });
+    */
     return collision;
 }
 
@@ -655,11 +636,24 @@ function render() {
     vector.sub(camera.position);
 
     var raycaster2 = new THREE.Raycaster(camera.position, vector);
-    const treeIntersects = raycaster2.intersectObjects(circleList, false);
+    const treeIntersects = raycaster2.intersectObjects(treeList, true);
+
 
     if (treeIntersects.length > 0) {
         // implement changing tree opacity here
-        console.log('reticle is raycasting into a sphere or wall');
+        children = treeIntersects[0].object.parent.children;
+        
+        children.forEach(element => {
+            let material = element.material;
+            material.emissive  = new THREE.Color( 0x444444 );
+        })
+    } else
+    {
+        console.log(children);
+        children.forEach(element => {
+            let material = element.material;
+            material.emissive  = new THREE.Color( 0x000000 );
+        })
     }
 
 

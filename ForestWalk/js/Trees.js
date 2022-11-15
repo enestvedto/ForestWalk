@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { BufferGeometry, Euler, Group, Line, LineSegments, Vector3 } from 'three';
 
-const branchDimension = {w: 1, h:4, d: 1}
+const branchDimension = {w: 0.5, h:2, d: 0.5}
 const geometry = new THREE.BoxGeometry(branchDimension.w, branchDimension.h, branchDimension.d);
 const material = new THREE.MeshStandardMaterial({
     color: 0x002211,
@@ -59,26 +59,33 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
                 curPos = nextPos;
                 prevRot = curRot.clone();
 
-                height.multiplyScalar(0.75);
-                branchScale = branchScale * 0.75;
-
                 break;
 
             case '[':
-                stack.push([curPos, curRot.clone(), curAngle, height.clone(), branchScale]);
+                console.log('push');
+                stack.push([curPos, curRot.clone(), prevRot.clone(), curAngle, height.clone(), branchScale]);
+
+                console.log(prevRot.y, prevRot.z);
+                
+                height.multiplyScalar(0.75);
+                branchScale = branchScale * 0.9;
+
                 break;
 
             case ']':
+                console.log('pop');
+
                 let data = stack.pop();
                 curPos = data[0];
 
                 curRot = data[1];
-                prevRot = curRot.clone();
+                prevRot = data[2];
+                console.log(prevRot.y, prevRot.z);
 
-                curAngle = data[2];
+                curAngle = data[3];
 
-                height = data[3];
-                branchScale = data[4];
+                height = data[4];
+                branchScale = data[5];
 
 
                 break;
@@ -87,7 +94,7 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
                 break;
 
             case '-':
-                curAngle = curAngle/2;
+                curAngle = curAngle * 0.75;
                 break;
 
             case '*':
@@ -113,7 +120,7 @@ function generateTrinaryFractal(sequence, iteration) {
         let phrase = '';
         switch (char) {
             case '0':
-                phrase = '1[+0]*[+0]*[+0]';
+                phrase = '1[-+0]*[-+0]*[-+0]';
                 break;
             case '1':
                 phrase = '11';
@@ -144,9 +151,7 @@ function generateBarnsleyTree(iterations, angle = 25 * (Math.PI / 180), axiom = 
     let prevRot = new THREE.Euler(0, 0, 0);
     let stack = [];
 
-    let width = new THREE.Vector3(1, 0, 0);
-    let height = new THREE.Vector3(0, 4, 0);
-    let depth = new THREE.Vector3(0, 0, 1);
+    let height = new THREE.Vector3(0, branchDimension.h, 0);
 
     for (let i = 0; i < sequence.length; i++) {
         let char = sequence.charAt(i);

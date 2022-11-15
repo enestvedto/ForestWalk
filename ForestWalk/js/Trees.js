@@ -55,10 +55,10 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
                 nextPos = [tempHeight.x + nextPos[0], tempHeight.y + nextPos[1], tempHeight.z + nextPos[2]];
 
                 let branch = new THREE.Mesh(branchGeometry.clone(), branchMaterial.clone());
-                branch.castShadow = true;
                 branch.position.set(nextPos[0], nextPos[1], nextPos[2]);
                 branch.rotation.set(curRot.x, curRot.y, curRot.z);
                 branch.scale.set(branchScale, branchScale, branchScale);
+                branch.castShadow = true;
                 tree.add(branch);
 
                 if(char === '0' || char === 't') //LEAF CODE
@@ -68,9 +68,9 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
                     tempHeight.applyEuler(curRot);
 
                     let leaf = new THREE.Mesh(leafGeometry.clone(), leafMaterial.clone());
-                    leaf.castShadow = true;
                     leaf.position.set(nextPos[0] + tempHeight.x, nextPos[1] + tempHeight.y, nextPos[2] + tempHeight.z);
                     leaf.rotation.set(curRot.x, curRot.y, curRot.z);
+                    leaf.castShadow = true;
                     tree.add(leaf);
                 }
 
@@ -100,7 +100,7 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
 
                 height = data[4];
                 branchScale = data[5];
-                
+
                 break;
             case '+':
                 curRot.z += curAngle;
@@ -117,7 +117,6 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 4), axiom = '0') {
         }
 
     }
-
     return tree;
 }
 

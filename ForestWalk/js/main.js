@@ -78,10 +78,10 @@ function initGraphics() {
 
     const sunTexture = textload.load('assets/sun.jpeg');
     let geometry = new THREE.SphereGeometry(1);
-    let material = new THREE.MeshStandardMaterial({ map: sunTexture }); // color: 0xFFE87C });
+    let material = new THREE.MeshBasicMaterial({ map: sunTexture }); // color: 0xFFE87C });
 
     sun = new THREE.Mesh(geometry, material);
-    sun.position.y = 10;
+    sun.position.y = 20;
     skySystem.add(sun);
 
     const moonTexture = textload.load('assets/moon.jpeg');
@@ -89,23 +89,24 @@ function initGraphics() {
     material = new THREE.MeshBasicMaterial({ map: moonTexture })
 
     moon = new THREE.Mesh(geometry, material);
-    moon.position.y = -10;
+    moon.position.y = -20;
     skySystem.add(moon);
     scene.add(skySystem);
 
+    skySystem.position.set(64, 0,-64);
+    skySystem.scale.set(7,7,7);
+
     //DirectionalLights and Target
-    directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+    directionalLight = new THREE.DirectionalLight(0xfdfbd3);
     directionalLight.castShadow = true;
     scene.add(directionalLight);
     directionalLight.target = moon;
 
-    directionalLight2 = new THREE.DirectionalLight(0x735B48, 0.1);
+    directionalLight2 = new THREE.DirectionalLight(0xc2c5cc, 0.5);
     directionalLight2.castShadow = true;
     scene.add(directionalLight2);
     directionalLight2.target = sun;
 
-    const light = new THREE.AmbientLight(0x404040, 0.1); // soft white light
-    scene.add(light);
 
     // flashlight
     const flashlight = new THREE.SpotLight(0xffffff, 3, 40, Math.PI / 10, 0.75, 2);
@@ -144,7 +145,7 @@ function initGraphics() {
     renderer = new THREE.WebGLRenderer({
         canvas: walkCanvas,
     });
-    renderer.setClearColor(0xffffff);
+    renderer.setClearColor(0x000000);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
     renderer.shadowMap.enabled = true;
@@ -534,20 +535,20 @@ function initTerrain() {
     const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
     wall1.translateX(129 / 2);
     wall1.translateY(10);
-    scene.add(wall1);
+    //scene.add(wall1);
     wall2.rotation.set(0, Math.PI / 2, 0);
     wall2.translateX(129 / 2);
     wall2.translateY(10);
-    scene.add(wall2);
+    //scene.add(wall2);
     wall3.translateX(129 / 2);
     wall3.translateZ(-128);
     wall3.translateY(10);
-    scene.add(wall3);
+    //scene.add(wall3);
     wall4.rotation.set(0, Math.PI / 2, 0);
     wall4.translateZ(128);
     wall4.translateX(129 / 2);
     wall4.translateY(10);
-    scene.add(wall4);
+    //scene.add(wall4);
 
     //circleList.push(wall1);
     //circleList.push(wall2);
@@ -641,6 +642,7 @@ function render() {
 
     if (treeIntersects.length > 0) {
         // implement changing tree opacity here
+        console.log(treeIntersects[0].object.parent);
         children = treeIntersects[0].object.parent.children;
         
         children.forEach(element => {
@@ -649,7 +651,6 @@ function render() {
         })
     } else
     {
-        console.log(children);
         children.forEach(element => {
             let material = element.material;
             material.emissive  = new THREE.Color( 0x000000 );

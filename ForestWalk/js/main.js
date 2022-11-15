@@ -37,7 +37,7 @@ let back = false;
 let left = false;
 let right = false;
 
-const velocity = new THREE.Vector3();
+const velo = new THREE.Vector3();
 const direction = new THREE.Vector3();
 const position = new THREE.Vector3();
 
@@ -130,8 +130,6 @@ function initGraphics() {
     camera.add(sphere);
     sphere.position.set(0, 0, -.2);
 
-    console.log(scene);
-
     //test tree
     let t = generateTrinaryTree(5);
     console.log(t);
@@ -171,19 +169,6 @@ function initControls() {
     renderer.setSize(walkCanvas.clientWidth, walkCanvas.clientHeight);
     renderer.shadowMap.enabled = true;
 
-    // clock
-    clock = new THREE.Clock();
-
-    // initialize terrain
-    initTerrain();
-
-    // circle reticle
-    const geometry = new THREE.SphereGeometry(0.0005, 32, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    reticle = new THREE.Mesh(geometry, material);
-    camera.add(reticle);
-    reticle.position.set(0, 0, -.2);
-
     // camera sphere
     const cameraGeometry = new THREE.SphereGeometry(1);
     const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
@@ -213,9 +198,6 @@ function initControls() {
     circleList.push(s3);
     circleList.push(s4);
     circleList.push(s5);
-
-    camera.translateY(10);
-
 
 } //end of initGraphics
 document.onkeydown = function (e) {
@@ -612,7 +594,6 @@ function isCollision() {
  * must be taken during a single render.
  */
 function render() {
-    const timedelta = clock.getDelta();
     /*
         if (move) {
             skySystem.rotation.z += timedelta * 0.1;
@@ -651,9 +632,9 @@ function render() {
             }
         }
         if (back) {
-            controls.moveForward(0.5);
+            controls.moveForward(-0.5);
             if (isCollision()) {
-                controls.moveForward(-0.5);
+                controls.moveForward(0.5);
             }
         }
     }
@@ -661,7 +642,7 @@ function render() {
     // simulate walking on top of the terrain
     raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
     distance = 2;
-    var velo = new THREE.Vector3();
+    var velocity = new THREE.Vector3();
     var intersects = raycaster.intersectObject(groundTerrain);
     if (intersects.length > 0) {
         var delta = distance - intersects[0].distance;
@@ -675,9 +656,9 @@ function render() {
         } else if (distance < intersects[0].distance) {
             velocity.y += (delta);
         }
-        camera.translateY(velo.y);
-    }
 
+        camera.translateY(velocity.y);
+    }
 
     // find intersections with trees
     var vector = new THREE.Vector3(0, 0, -1);

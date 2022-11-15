@@ -128,8 +128,29 @@ function initGraphics() {
     camera.add(sphere);
     sphere.position.set(0, 0, -.2);
 
-    //test tree
-    for (let i = 0; i < 50; i++) {
+    //generate trees
+    for (let i = 0; i < 10; i++) {
+
+        let t = generateTrinaryTree(5);
+        t.castShadow = true;
+        let x = Math.random() * 125 + 2;
+        let z = Math.random() * 125 + 2;
+        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1, -z);
+        scene.add(t);
+        treeList.push(t);
+    }
+
+    for (let i = 0; i < 10; i++) {
+
+        let t = generateBarnsleyTree(3);
+        t.castShadow = true;
+        let x = Math.random() * 125 + 2;
+        let z = Math.random() * 125 + 2;
+        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1, -z);
+        scene.add(t);
+        treeList.push(t);
+
+    }    for (let i = 0; i < 10; i++) {
 
         let t = generatePineTree(3);
         t.castShadow = true;

@@ -19,10 +19,10 @@ const pineMaterial = new THREE.MeshStandardMaterial({
     color: 0x725C42,
 });
 
-const pineLeafDimension = {r1: 0.5, r2: 6, h: 4}
+const pineLeafDimension = {r1: 0.5, r2: 6, h: 6}
 const pineLeafGeometry = new THREE.CylinderGeometry(pineLeafDimension.r1, pineLeafDimension.r2, pineLeafDimension.h);
 const pineLeafMaterial = new THREE.MeshStandardMaterial({
-    color: 0x3A5F0B,
+    color: 0x143306,
 });
 
 function generateTrinaryTree(iteration, angle = (Math.PI / 5), axiom = '0') {

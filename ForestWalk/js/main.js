@@ -130,9 +130,13 @@ function initGraphics() {
     console.log(scene);
 
     //test tree
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 50; i++) {
 
         let t = generateTrinaryTree(3);
+        console.log(t);
+        let x = Math.random() * 125 + 2;
+        let z = Math.random() * 125 + 2;
+        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1, -z);
         scene.add(t);
         treeList.push(t);
     }
@@ -537,7 +541,6 @@ function initTerrain() {
 
     // flip the terrain rightside up
     groundTerrain.rotation.set(-Math.PI / 2, 0, 0)
-    groundTerrain.translateX(-width / 2);
 
     // "walk" on top of the terrain
     raycaster = new THREE.Raycaster();

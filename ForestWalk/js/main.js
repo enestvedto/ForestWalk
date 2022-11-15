@@ -594,49 +594,28 @@ function isCollision() {
  * must be taken during a single render.
  */
 function render() {
-    /*
-        if (move) {
-            skySystem.rotation.z += timedelta * 0.1;
-    
-            velocity.x -= velocity.x * 15.0 * timedelta;
-            velocity.z -= velocity.z * 15.0 * timedelta;
-    
-            direction.z = Number(forward) - Number(back);
-            direction.x = Number(right) - Number(left);
-            direction.normalize();
-    
-            if (forward || back) velocity.z -= direction.z * 100.0 * timedelta;
-            if (left || right) velocity.x -= direction.x * 100.0 * timedelta;
-    
-            controls.moveRight(- velocity.x * timedelta);
-            controls.moveForward(- velocity.z * timedelta);*/
     const deltaTime = clock.getDelta();
 
     if (move) {
-        if (forward) {
-            controls.moveForward(0.5);
-            if (isCollision()) {
-                controls.moveForward(-0.5);
-            }
+        skySystem.rotation.z += deltaTime * 0.1;
+
+        velo.x -= velo.x * 10 * deltaTime;
+        velo.z -= velo.z * 10 * deltaTime;
+
+        direction.z = Number(forward) - Number(back);
+        direction.x = Number(right) - Number(left);
+        direction.normalize();
+
+        if (forward || back) velo.z -= direction.z * 100.0 * deltaTime;
+        if (left || right) velo.x -= direction.x * 100.0 * deltaTime;
+
+        // move then check for collision then move back?
+        if (isCollision()) {
+            console.log('colliding with a sphere or wall');
         }
-        if (left) {
-            controls.moveRight(-0.5);
-            if (isCollision()) {
-                controls.moveRight(0.5);
-            }
-        }
-        if (right) {
-            controls.moveRight(0.5);
-            if (isCollision()) {
-                controls.moveRight(-0.5);
-            }
-        }
-        if (back) {
-            controls.moveForward(-0.5);
-            if (isCollision()) {
-                controls.moveForward(0.5);
-            }
-        }
+
+        controls.moveRight(-velo.x * deltaTime);
+        controls.moveForward(-velo.z * deltaTime);
     }
 
     // simulate walking on top of the terrain
@@ -671,7 +650,7 @@ function render() {
 
     if (treeIntersects.length > 0) {
         // implement changing tree opacity here
-        console.log('raycast');
+        console.log('reticle is raycasting into a sphere or wall');
     }
 
 

@@ -2,7 +2,7 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { generateBarnsleyTree, generatePineTree, generateTrinaryTree } from './Trees';
-import { BoxGeometry, Mesh, MeshStandardMaterial } from 'three';
+import { AmbientLight, BoxGeometry, EqualStencilFunc, Mesh, MeshStandardMaterial } from 'three';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -25,7 +25,22 @@ let groundTerrain;
 let skyBox;
 let reticle;
 let cameraSphere;
-const sky_colors = {day: 0x87CEEB, sunset: 0xF4633C, night: 0x070B43}
+let ambientLight;
+
+//Colors for the sky background
+const sky_colors = {
+    day: 0x87CEEB,
+    sunset: 0xF4633C,
+    night: 0x070B43,
+    midnight: 0x000000
+}
+
+//Colors for sun to interpolate between
+const sun_colors = {
+    min: 0xDD6E0F,
+    max: 0xfdfbd3
+}
+
 const cycle_per_sec = ((15 * (Math.PI / 180)) / 10);
 const treeList = [];
 
@@ -44,10 +59,6 @@ let right = false;
 const velo = new THREE.Vector3();
 const direction = new THREE.Vector3();
 const position = new THREE.Vector3();
-
-
-
-
 
 /**
  * Startup Function
@@ -79,7 +90,7 @@ function initGraphics() {
 
     //SkyBox 
     skySystem = new THREE.Group();
-    skySystem.rotation.z = Math.PI/2;
+    skySystem.rotation.z = Math.PI / 2;
 
     let geometry = new THREE.SphereGeometry(3)
     let material = new THREE.MeshStandardMaterial({
@@ -116,17 +127,20 @@ function initGraphics() {
     //Lights
     sunLight = new THREE.PointLight(0xfdfbd3);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.mapSize.width = 4096;
+    sunLight.shadow.mapSize.height = 4096;
     sun.add(sunLight);
 
-    moonLight = new THREE.PointLight(0xc2c5cc, 0.5);
+    moonLight = new THREE.PointLight(0xc2c5cc, 0.0);
     //directionalLight2.castShadow = true;
     moon.add(moonLight);
 
+    // ambient ight
+    ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.1);
+    scene.add(ambientLight);
 
     // flashlight
-    const flashlight = new THREE.SpotLight(0xffffff, 1, 40, Math.PI / 10, 0.75, 2);
+    const flashlight = new THREE.SpotLight(0xffffff, 1, 60, Math.PI / 10, 0.75, 2);
     camera.add(flashlight);
     flashlight.position.set(0, 0, 1);
     flashlight.target = camera;
@@ -589,6 +603,26 @@ function isCollision() {
 }
 
 
+function updateSkySystem(deltaTime) {
+    skySystem.rotation.z += deltaTime * cycle_per_sec;
+    let sunPos = Math.sin(skySystem.rotation.z);
+
+    if (sunPos >= 0.1)
+    {
+        sunLight.intensity = 1.5;
+        sunLight.color = new THREE.Color(weightColors(sunPos, String(sun_colors.max), String(sun_colors.min)));
+        moonLight.intensity = 0.0;
+        ambientLight.intensity = 0.1;
+        skyBox.material.color = new THREE.Color(weightColors(sunPos, String(sky_colors.day), String(sky_colors.night)));
+    }
+    else if (sunPos <= 0) {
+        sunLight.intensity = 0;
+        moonLight.intensity = 0.5;
+        ambientLight.intensity = 0.0;
+        skyBox.material.color = new THREE.Color(sky_colors.night);
+    }
+
+}
 
 /**
  * A basic render method, in case special steps
@@ -598,9 +632,8 @@ function render() {
     const deltaTime = clock.getDelta();
 
     if (move) {
-        skySystem.rotation.z += deltaTime * cycle_per_sec;
-        console.log(Math.sin(skySystem.rotation.z))
-        //implement light toggle here
+
+        updateSkySystem(deltaTime);
 
         velo.x -= velo.x * 10 * deltaTime;
         velo.z -= velo.z * 10 * deltaTime;
@@ -692,8 +725,33 @@ function getRndInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 } // end getRndInteger
 
-
 main();
 
+function rgbToString(r, g, b) {
+    return "rgb(" + r + "," + g + "," + b +")";
+}
 
-// walkingn
+function hexToRgb(hex) {
+    console.log(hex);
+    hex = Math.floor( hex );
+
+    console.log(( hex >> 16 & 255 ) / 255)
+    return {
+        r : ( hex >> 16 & 255 ),
+        g : ( hex >> 8 & 255 ),
+        b:  ( hex & 255 )
+    }
+}
+
+function weightColors(sunPos, hex1, hex2)
+{
+    let rgb1 = hexToRgb(hex1);
+    let rbg2 = hexToRgb(hex2);
+    
+    let r = Math.floor(sunPos * rgb1.r + (1 - sunPos) * rbg2.r);
+    let g = Math.floor(sunPos * rgb1.g + (1 - sunPos) * rbg2.g);
+    let b = Math.floor(sunPos * rgb1.b + (1 - sunPos) * rbg2.b);
+
+    console.log(r, g, b)
+    return rgbToString(r,g,b);
+}

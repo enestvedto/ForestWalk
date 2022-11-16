@@ -212,7 +212,7 @@ function initGraphics() {
 
     camera.translateY(10);
 
-    // random shapes for raycast detection
+    // random shapes for raycaxst detection
 
 
 } //end of initGraphics
@@ -580,25 +580,24 @@ function initTerrain() {
 
 } // end of initTerrain
 
-function isCollision() {
+function isTreeCollision() {
     var collision = false;
     // check for collisions here
-    /*treeList.forEach(item => {
+    treeList.forEach(tree => {
         cameraSphere.geometry.computeBoundingBox();
         cameraSphere.updateMatrixWorld();
         var bb1 = cameraSphere.geometry.boundingBox.clone();
         bb1.applyMatrix4(cameraSphere.matrixWorld);
         // if there is an intersection then refuse the size
-        item.geometry.computeBoundingBox();
-        item.updateMatrixWorld();
-        var bb2 = item.geometry.boundingBox.clone();
-        bb2.applyMatrix4(item.matrixWorld);
+        tree.children[0].geometry.computeBoundingBox();
+        tree.children[0].updateMatrixWorld();
+        var bb2 = tree.children[0].geometry.boundingBox.clone();
+        bb2.applyMatrix4(tree.children[0].matrixWorld);
         // if there is a collision, stop movement
         if (bb1.intersectsBox(bb2)) {
             collision = true;
         }
     });
-    */
     return collision;
 }
 
@@ -608,21 +607,18 @@ function updateSkySystem(deltaTime) {
     let sunPos = Math.sin(skySystem.rotation.z);
     let cycleSide = Math.cos(skySystem.rotation.z);
 
-    if (sunPos >= 0.1)
-    {
+    if (sunPos >= 0.1) {
         sunLight.intensity = 1.5;
         sunLight.color = new THREE.Color(sun_colors.max);
         moonLight.intensity = 0.0;
         ambientLight.intensity = 0.1;
         skyBox.material.color = new THREE.Color(sky_colors.day);
     }
-    else if (sunPos >= 0 && cycleSide < 0) 
-    {
+    else if (sunPos >= 0 && cycleSide < 0) {
         sunLight.color = new THREE.Color(weightColors(sunPos / 0.1, sun_colors.max, sun_colors.min));
         //skyBox.material.color = new THREE.Color(weightColors(sunPos / 0.1, sky_colors.day, sky_colors.sunset));
     }
-    else if (sunPos >= -0.1 && cycleSide < 0) 
-    {
+    else if (sunPos >= -0.1 && cycleSide < 0) {
         skyBox.material.color = new THREE.Color(weightColors(Math.abs(sunPos) / 0.1, sky_colors.night, sky_colors.day));
     }
     else if (sunPos < -0.1) {
@@ -631,12 +627,10 @@ function updateSkySystem(deltaTime) {
         ambientLight.intensity = 0.0;
         skyBox.material.color = new THREE.Color(sky_colors.night);
     }
-    else if(sunPos >= -0.1 && cycleSide > 0)
-    {
+    else if (sunPos >= -0.1 && cycleSide > 0) {
         skyBox.material.color = new THREE.Color(weightColors(Math.abs(sunPos) / 0.1, sky_colors.night, sky_colors.sunset));
     }
-    else if(sunPos >= 0 && cycleSide > 0)
-    {
+    else if (sunPos >= 0 && cycleSide > 0) {
         sunLight.color = new THREE.Color(weightColors(sunPos / 0.1, sun_colors.max, sun_colors.min));
         skyBox.material.color = new THREE.Color(weightColors(sunPos / 0.1, sky_colors.day, sky_colors.sunset));
     }
@@ -665,12 +659,17 @@ function render() {
         if (left || right) velo.x -= direction.x * 100.0 * deltaTime;
 
         // move then check for collision then move back?
-        if (isCollision()) {
-            console.log('colliding with a sphere or wall');
-        }
+        cameraSphere.position.set(0, 0, 0);
+        cameraSphere.position.x += (-velo.x * deltaTime);
+        cameraSphere.position.z += (-velo.z * deltaTime);
 
-        controls.moveRight(-velo.x * deltaTime);
-        controls.moveForward(-velo.z * deltaTime);
+        if (!isTreeCollision()) {
+            controls.moveRight(-velo.x * deltaTime);
+            controls.moveForward(-velo.z * deltaTime);
+        }
+        else {
+            console.log('colliding with a tree trunk');
+        }
 
 
         // simulate walking on top of the terrain
@@ -747,27 +746,26 @@ function getRndInteger(min, max) {
 main();
 
 function rgbToString(r, g, b) {
-    return "rgb(" + r + "," + g + "," + b +")";
+    return "rgb(" + r + "," + g + "," + b + ")";
 }
 
 function hexToRgb(hex) {
-    hex = Math.floor( hex );
+    hex = Math.floor(hex);
 
     return {
-        r : ( hex >> 16 & 255 ),
-        g : ( hex >> 8 & 255 ),
-        b :  ( hex & 255 )
+        r: (hex >> 16 & 255),
+        g: (hex >> 8 & 255),
+        b: (hex & 255)
     }
 }
 
-function weightColors(sunPos, hex1, hex2)
-{
+function weightColors(sunPos, hex1, hex2) {
     let rgb1 = hexToRgb(hex1);
     let rbg2 = hexToRgb(hex2);
-    
+
     let r = Math.floor(sunPos * rgb1.r + (1 - sunPos) * rbg2.r);
     let g = Math.floor(sunPos * rgb1.g + (1 - sunPos) * rbg2.g);
     let b = Math.floor(sunPos * rgb1.b + (1 - sunPos) * rbg2.b);
 
-    return rgbToString(r,g,b);
+    return rgbToString(r, g, b);
 }

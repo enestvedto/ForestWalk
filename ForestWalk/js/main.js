@@ -43,6 +43,7 @@ const sun_colors = {
 
 const cycle_per_sec = ((15 * (Math.PI / 180)) / 10);
 const treeList = [];
+const wallList = [];
 
 // Graphics World Variables
 let skySystem;
@@ -66,6 +67,7 @@ const position = new THREE.Vector3();
 function main() {
     initGraphics();
     initControls();
+    initBorder();
     render();
 } //end of main
 
@@ -216,6 +218,37 @@ function initGraphics() {
 
 
 } //end of initGraphics
+
+function initBorder() {
+    // add walls
+    const wallGeometry = new THREE.PlaneGeometry(129, 20);
+    const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+    const wall1 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall3 = new THREE.Mesh(wallGeometry, wallMaterial);
+    const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall1.translateX(129 / 2);
+    wall1.translateY(10);
+    //scene.add(wall1);
+    wall2.rotation.set(0, Math.PI / 2, 0);
+    wall2.translateX(129 / 2);
+    wall2.translateY(10);
+    //scene.add(wall2);
+    wall3.translateX(129 / 2);
+    wall3.translateZ(-128);
+    wall3.translateY(10);
+    //scene.add(wall3);
+    wall4.rotation.set(0, Math.PI / 2, 0);
+    wall4.translateZ(128);
+    wall4.translateX(129 / 2);
+    wall4.translateY(10);
+    //scene.add(wall4);
+
+    wallList.push(wall1);
+    wallList.push(wall2);
+    wallList.push(wall3);
+    wallList.push(wall4);
+}
 
 function initControls() {
 
@@ -601,6 +634,27 @@ function isTreeCollision() {
     return collision;
 }
 
+function isBorderCollision() {
+    var collision = false;
+    // check for collisions here
+    wallList.forEach(wall => {
+        cameraSphere.geometry.computeBoundingBox();
+        cameraSphere.updateMatrixWorld();
+        var bb1 = cameraSphere.geometry.boundingBox.clone();
+        bb1.applyMatrix4(cameraSphere.matrixWorld);
+        // if there is an intersection then refuse the size
+        wall.geometry.computeBoundingBox();
+        wall.updateMatrixWorld();
+        var bb2 = wall.geometry.boundingBox.clone();
+        bb2.applyMatrix4(wall.matrixWorld);
+        // if there is a collision, stop movement
+        if (bb1.intersectsBox(bb2)) {
+            collision = true;
+        }
+    });
+    return collision;
+}
+
 
 function updateSkySystem(deltaTime) {
     skySystem.rotation.z += deltaTime * 4 * cycle_per_sec;
@@ -663,7 +717,7 @@ function render() {
         cameraSphere.position.x += (-velo.x * deltaTime);
         cameraSphere.position.z += (-velo.z * deltaTime);
 
-        if (!isTreeCollision()) {
+        if (!isTreeCollision() && !isBorderCollision()) {
             controls.moveRight(-velo.x * deltaTime);
             controls.moveForward(-velo.z * deltaTime);
         }

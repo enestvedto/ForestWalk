@@ -2,7 +2,7 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { generateBarnsleyTree, generatePineTree, generateTrinaryTree } from './Trees';
-import { BoxGeometry, MeshStandardMaterial } from 'three';
+import { BoxGeometry, Mesh, MeshStandardMaterial } from 'three';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -22,8 +22,11 @@ let distance;
 let raycaster;
 let reticleTarget;
 let groundTerrain;
+let skyBox;
 let reticle;
 let cameraSphere;
+const sky_colors = {day: 0x87CEEB, sunset: 0xF4633C, night: 0x070B43}
+const cycle_per_sec = ((15 * (Math.PI / 180)) / 10);
 const treeList = [];
 
 // Graphics World Variables
@@ -73,31 +76,44 @@ function initGraphics() {
     camera.name = 'camera';
     scene.add(camera);
 
+
+    //SkyBox 
+    skySystem = new THREE.Group();
+    skySystem.rotation.z = Math.PI/2;
+
+    let geometry = new THREE.SphereGeometry(3)
+    let material = new THREE.MeshStandardMaterial({
+        color: 0x87CEEB,
+        side: THREE.BackSide
+    })
+
+    skyBox = new THREE.Mesh(geometry, material);
+    skySystem.add(skyBox);
+
     //Sun and Moon System
     let textload = new THREE.TextureLoader();
-    skySystem = new THREE.Group();
 
     const sunTexture = textload.load('assets/sun.jpeg');
-    let geometry = new THREE.SphereGeometry(1);
-    let material = new THREE.MeshBasicMaterial({ map: sunTexture }); // color: 0xFFE87C });
+    geometry = new THREE.SphereGeometry(0.1);
+    material = new THREE.MeshBasicMaterial({ map: sunTexture }); // color: 0xFFE87C });
 
     sun = new THREE.Mesh(geometry, material);
-    sun.position.y = 20;
+    sun.position.x = 2;
     skySystem.add(sun);
 
     const moonTexture = textload.load('assets/moon.jpeg');
-    geometry = new THREE.SphereGeometry(1);
+    geometry = new THREE.SphereGeometry(0.05);
     material = new THREE.MeshBasicMaterial({ map: moonTexture })
 
     moon = new THREE.Mesh(geometry, material);
-    moon.position.y = -20;
+    moon.position.x = -2;
     skySystem.add(moon);
     scene.add(skySystem);
 
     skySystem.position.set(64, 0, -64);
-    skySystem.scale.set(7, 7, 7);
+    skySystem.scale.set(200, 200, 200);
 
-    //DirectionalLights and Target
+    //Lights
     sunLight = new THREE.PointLight(0xfdfbd3);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
@@ -124,9 +140,9 @@ function initGraphics() {
     // circle reticle
     geometry = new THREE.SphereGeometry(0.0005, 32, 16);
     material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    let sphere = new THREE.Mesh(geometry, material);
-    camera.add(sphere);
-    sphere.position.set(0, 0, -.2);
+    reticle = new THREE.Mesh(geometry, material);
+    camera.add(reticle);
+    reticle.position.set(0, 0, -.2);
 
     //generate trees
     for (let i = 0; i < 10; i++) {
@@ -548,35 +564,6 @@ function initTerrain() {
     // start in the middle of the terrain
     camera.position.set(64, smoothMap[64][64] + 2, -64);
 
-    // add walls
-    const wallGeometry = new THREE.PlaneGeometry(129, 20);
-    const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
-    const wall1 = new THREE.Mesh(wallGeometry, wallMaterial);
-    const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
-    const wall3 = new THREE.Mesh(wallGeometry, wallMaterial);
-    const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
-    wall1.translateX(129 / 2);
-    wall1.translateY(10);
-    //scene.add(wall1);
-    wall2.rotation.set(0, Math.PI / 2, 0);
-    wall2.translateX(129 / 2);
-    wall2.translateY(10);
-    //scene.add(wall2);
-    wall3.translateX(129 / 2);
-    wall3.translateZ(-128);
-    wall3.translateY(10);
-    //scene.add(wall3);
-    wall4.rotation.set(0, Math.PI / 2, 0);
-    wall4.translateZ(128);
-    wall4.translateX(129 / 2);
-    wall4.translateY(10);
-    //scene.add(wall4);
-
-    //circleList.push(wall1);
-    //circleList.push(wall2);
-    //circleList.push(wall3);
-    //circleList.push(wall4);
-
 } // end of initTerrain
 
 function isCollision() {
@@ -602,6 +589,7 @@ function isCollision() {
 }
 
 
+
 /**
  * A basic render method, in case special steps
  * must be taken during a single render.
@@ -610,7 +598,9 @@ function render() {
     const deltaTime = clock.getDelta();
 
     if (move) {
-        skySystem.rotation.z += deltaTime * 0.05;
+        skySystem.rotation.z += deltaTime * cycle_per_sec;
+        console.log(Math.sin(skySystem.rotation.z))
+        //implement light toggle here
 
         velo.x -= velo.x * 10 * deltaTime;
         velo.z -= velo.z * 10 * deltaTime;
@@ -629,69 +619,69 @@ function render() {
 
         controls.moveRight(-velo.x * deltaTime);
         controls.moveForward(-velo.z * deltaTime);
-    }
 
-    // simulate walking on top of the terrain
-    raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
-    distance = 2;
-    var velocity = new THREE.Vector3();
-    var intersects = raycaster.intersectObject(groundTerrain);
-    if (intersects.length > 0) {
-        var delta = distance - intersects[0].distance;
-        //new position is higher so you need to move you object upwards
-        if (distance >= intersects[0].distance) {
-            camera.position.y += (delta);
-        }
-        //gravity and prevent falling through floor
-        if (distance >= intersects[0].distance && velocity.y <= 0) {
-            velocity.y = 0;
-        } else if (distance < intersects[0].distance) {
-            velocity.y += (delta);
-        }
 
-        camera.translateY(velocity.y);
-    }
+        // simulate walking on top of the terrain
+        raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
+        distance = 2;
+        var velocity = new THREE.Vector3();
+        var intersects = raycaster.intersectObject(groundTerrain);
+        if (intersects.length > 0) {
+            var delta = distance - intersects[0].distance;
+            //new position is higher so you need to move you object upwards
+            if (distance >= intersects[0].distance) {
+                camera.position.y += (delta);
+            }
+            //gravity and prevent falling through floor
+            if (distance >= intersects[0].distance && velocity.y <= 0) {
+                velocity.y = 0;
+            } else if (distance < intersects[0].distance) {
+                velocity.y += (delta);
+            }
 
-    // find intersections with trees
-    var vector = new THREE.Vector3(0, 0, -1);
-    vector = camera.localToWorld(vector);
-    // make vector a unit vector with the same direction as the camera
-    vector.sub(camera.position);
-
-    var raycaster2 = new THREE.Raycaster(camera.position, vector);
-    const treeIntersects = raycaster2.intersectObjects(treeList, true);
-
-    if (treeIntersects.length > 0) {
-        let tree = treeIntersects[0].object.parent;
-
-        if (!reticleTarget) {
-            reticleTarget = tree;
+            camera.translateY(velocity.y);
         }
 
-        if (!(tree.uuid == reticleTarget.uuid)) {
+        // find intersections with trees
+        var vector = new THREE.Vector3(0, 0, -1);
+        vector = camera.localToWorld(vector);
+        // make vector a unit vector with the same direction as the camera
+        vector.sub(camera.position);
+
+        var raycaster2 = new THREE.Raycaster(camera.position, vector);
+        const treeIntersects = raycaster2.intersectObjects(treeList, true);
+
+        if (treeIntersects.length > 0) {
+            let tree = treeIntersects[0].object.parent;
+
+            if (!reticleTarget) {
+                reticleTarget = tree;
+            }
+
+            if (!(tree.uuid == reticleTarget.uuid)) {
+                reticleTarget.children.forEach(element => {
+                    let material = element.material;
+                    material.emissive = new THREE.Color(0x000000);
+                })
+
+                reticleTarget = tree;
+            }
+
             reticleTarget.children.forEach(element => {
                 let material = element.material;
-                material.emissive = new THREE.Color(0x000000);
-            })
+                material.emissive = new THREE.Color(0x444444);
+            });
 
-            reticleTarget = tree;
+        } else {
+            if (reticleTarget) {
+                reticleTarget.children.forEach(element => {
+                    let material = element.material;
+                    material.emissive = new THREE.Color(0x000000);
+                })
+            }
         }
 
-        reticleTarget.children.forEach(element => {
-            let material = element.material;
-            material.emissive = new THREE.Color(0x444444);
-        });
-
-    } else {
-        if (reticleTarget) {
-            reticleTarget.children.forEach(element => {
-                let material = element.material;
-                material.emissive = new THREE.Color(0x000000);
-            })
-        }
     }
-
-
     renderer.render(scene, camera);
     window.requestAnimationFrame(render);
 } //end of render

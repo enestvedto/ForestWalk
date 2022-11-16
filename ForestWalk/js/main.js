@@ -20,11 +20,11 @@ let textureLoader;
 let move;
 let distance;
 let raycaster;
+let reticleTarget;
 let groundTerrain;
 let reticle;
 let cameraSphere;
 const treeList = [];
-let children = []; //children of tree group
 
 // Graphics World Variables
 let skySystem;
@@ -94,8 +94,8 @@ function initGraphics() {
     skySystem.add(moon);
     scene.add(skySystem);
 
-    skySystem.position.set(64, 0,-64);
-    skySystem.scale.set(7,7,7);
+    skySystem.position.set(64, 0, -64);
+    skySystem.scale.set(7, 7, 7);
 
     //DirectionalLights and Target
     sunLight = new THREE.PointLight(0xfdfbd3);
@@ -135,7 +135,7 @@ function initGraphics() {
         t.castShadow = true;
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
-        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1, -z);
+        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
         scene.add(t);
         treeList.push(t);
     }
@@ -146,17 +146,17 @@ function initGraphics() {
         t.castShadow = true;
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
-        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1, -z);
+        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
         scene.add(t);
         treeList.push(t);
 
-    }    for (let i = 0; i < 10; i++) {
+    } for (let i = 0; i < 10; i++) {
 
-        let t = generatePineTree(3);
+        let t = generatePineTree(4);
         t.castShadow = true;
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
-        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1, -z);
+        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 3, -z); //interpolate between values
         scene.add(t);
         treeList.push(t);
     }
@@ -661,21 +661,34 @@ function render() {
     var raycaster2 = new THREE.Raycaster(camera.position, vector);
     const treeIntersects = raycaster2.intersectObjects(treeList, true);
 
-
     if (treeIntersects.length > 0) {
-        // implement changing tree opacity here
-        children = treeIntersects[0].object.parent.children;
-        
-        children.forEach(element => {
+        let tree = treeIntersects[0].object.parent;
+
+        if (!reticleTarget) {
+            reticleTarget = tree;
+        }
+
+        if (!(tree.uuid == reticleTarget.uuid)) {
+            reticleTarget.children.forEach(element => {
+                let material = element.material;
+                material.emissive = new THREE.Color(0x000000);
+            })
+
+            reticleTarget = tree;
+        }
+
+        reticleTarget.children.forEach(element => {
             let material = element.material;
-            material.emissive  = new THREE.Color( 0x444444 );
-        })
-    } else
-    {
-        children.forEach(element => {
-            let material = element.material;
-            material.emissive  = new THREE.Color( 0x000000 );
-        })
+            material.emissive = new THREE.Color(0x444444);
+        });
+
+    } else {
+        if (reticleTarget) {
+            reticleTarget.children.forEach(element => {
+                let material = element.material;
+                material.emissive = new THREE.Color(0x000000);
+            })
+        }
     }
 
 

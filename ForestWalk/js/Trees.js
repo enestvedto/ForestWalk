@@ -168,14 +168,14 @@ function generatePineFractal(sequence, iteration)
             case '0': //branch with top
                 r = Math.random()
                 if (r > 0.05)
-                    phrase = '10';
+                    phrase = '1[0]';
                 else
-                    phrase = '1[t/0]';
+                    phrase = '1[/0]';
                 break;
             case '1': //branch no top
                 r = Math.random()
                 if (r > 0.5)
-                    phrase = '1</t1';
+                    phrase = '</1t';
                 else
                     phrase = '1>1';
                 break;
@@ -207,6 +207,7 @@ function buildTree(sequence, angleZ, angleY,
 {
     let tree = new THREE.Group();
     let curPos = [0, 0, 0];
+    let nextPos = [0,0,0];
     let curRot = new THREE.Euler(0, 0, 0);
     let curAngle = angleZ;
     let prevRot = new THREE.Euler(0, 0, 0);
@@ -215,20 +216,20 @@ function buildTree(sequence, angleZ, angleY,
     let leafHeight = new THREE.Vector3(0, leafDimensions.h, 0);
     let branchScale = 1;
     let leafScale = 1;
-
+    let tempHeight = branchHeight.clone();
+    
 
     for (let i = 0; i < sequence.length; i++) {
         let char = sequence.charAt(i);
         switch (char) {
             case '0':
             case '1':
-            case 't':
 
-                let tempHeight = branchHeight.clone();
+                tempHeight = branchHeight.clone();
                 tempHeight.divideScalar(2);
                 tempHeight.applyEuler(curRot);
 
-                let nextPos = [tempHeight.x + curPos[0], tempHeight.y + curPos[1], tempHeight.z + curPos[2]];
+                nextPos = [tempHeight.x + curPos[0], tempHeight.y + curPos[1], tempHeight.z + curPos[2]];
 
                 tempHeight = branchHeight.clone();
                 tempHeight.divideScalar(2);
@@ -243,7 +244,7 @@ function buildTree(sequence, angleZ, angleY,
                 branch.castShadow = true;
                 tree.add(branch);
 
-                if(char === '0' || char === 't') //LEAF CODE
+                if(char === '0')
                 {
                     tempHeight = branchHeight.clone();
                     tempHeight.divideScalar(2);
@@ -267,6 +268,27 @@ function buildTree(sequence, angleZ, angleY,
 
                 curPos = nextPos;
                 prevRot = curRot.clone();
+                break;
+
+            case 't':
+                tempHeight = branchHeight.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(curRot);
+
+                let leafPos = [nextPos[0] + tempHeight.x, nextPos[1] + tempHeight.y, nextPos[2] + tempHeight.z]
+
+                tempHeight = leafHeight.clone();
+                tempHeight.divideScalar(2);
+                tempHeight.applyEuler(curRot);
+
+                leafPos = [leafPos[0] + tempHeight.x, leafPos[1] + tempHeight.y, leafPos[2] + tempHeight.z]
+
+                let leaf = new THREE.Mesh(lGeometry.clone(), lMaterial.clone());
+                leaf.position.set(leafPos[0],leafPos[1],leafPos[2]);
+                leaf.rotation.set(curRot.x, curRot.y, curRot.z);
+                leaf.scale.set( leafScale, leafScale, leafScale);
+                leaf.castShadow = true;
+                tree.add(leaf);
                 break;
 
             case '[':

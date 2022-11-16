@@ -31,8 +31,8 @@ let ambientLight;
 const sky_colors = {
     day: 0x87CEEB,
     sunset: 0xF4633C,
-    night: 0x070B43,
-    midnight: 0x000000
+    night: 0x000000,
+    sunrise: 0xF4633C,
 }
 
 //Colors for sun to interpolate between
@@ -132,7 +132,7 @@ function initGraphics() {
     sun.add(sunLight);
 
     moonLight = new THREE.PointLight(0xc2c5cc, 0.0);
-    //directionalLight2.castShadow = true;
+    moonLight.castShadow = true;
     moon.add(moonLight);
 
     // ambient ight
@@ -604,22 +604,41 @@ function isCollision() {
 
 
 function updateSkySystem(deltaTime) {
-    skySystem.rotation.z += deltaTime * cycle_per_sec;
+    skySystem.rotation.z += deltaTime * 4 * cycle_per_sec;
     let sunPos = Math.sin(skySystem.rotation.z);
+    let cycleSide = Math.cos(skySystem.rotation.z);
 
     if (sunPos >= 0.1)
     {
         sunLight.intensity = 1.5;
-        sunLight.color = new THREE.Color(weightColors(sunPos, String(sun_colors.max), String(sun_colors.min)));
+        sunLight.color = new THREE.Color(sun_colors.max);
         moonLight.intensity = 0.0;
         ambientLight.intensity = 0.1;
-        skyBox.material.color = new THREE.Color(weightColors(sunPos, String(sky_colors.day), String(sky_colors.night)));
+        skyBox.material.color = new THREE.Color(sky_colors.day);
     }
-    else if (sunPos <= 0) {
+    else if (sunPos >= 0 && cycleSide < 0) 
+    {
+        sunLight.color = new THREE.Color(weightColors(sunPos / 0.1, sun_colors.max, sun_colors.min));
+        //skyBox.material.color = new THREE.Color(weightColors(sunPos / 0.1, sky_colors.day, sky_colors.sunset));
+    }
+    else if (sunPos >= -0.1 && cycleSide < 0) 
+    {
+        skyBox.material.color = new THREE.Color(weightColors(Math.abs(sunPos) / 0.1, sky_colors.night, sky_colors.day));
+    }
+    else if (sunPos < -0.1) {
         sunLight.intensity = 0;
         moonLight.intensity = 0.5;
         ambientLight.intensity = 0.0;
         skyBox.material.color = new THREE.Color(sky_colors.night);
+    }
+    else if(sunPos >= -0.1 && cycleSide > 0)
+    {
+        skyBox.material.color = new THREE.Color(weightColors(Math.abs(sunPos) / 0.1, sky_colors.night, sky_colors.sunset));
+    }
+    else if(sunPos >= 0 && cycleSide > 0)
+    {
+        sunLight.color = new THREE.Color(weightColors(sunPos / 0.1, sun_colors.max, sun_colors.min));
+        skyBox.material.color = new THREE.Color(weightColors(sunPos / 0.1, sky_colors.day, sky_colors.sunset));
     }
 
 }
@@ -732,14 +751,12 @@ function rgbToString(r, g, b) {
 }
 
 function hexToRgb(hex) {
-    console.log(hex);
     hex = Math.floor( hex );
 
-    console.log(( hex >> 16 & 255 ) / 255)
     return {
         r : ( hex >> 16 & 255 ),
         g : ( hex >> 8 & 255 ),
-        b:  ( hex & 255 )
+        b :  ( hex & 255 )
     }
 }
 
@@ -752,6 +769,5 @@ function weightColors(sunPos, hex1, hex2)
     let g = Math.floor(sunPos * rgb1.g + (1 - sunPos) * rbg2.g);
     let b = Math.floor(sunPos * rgb1.b + (1 - sunPos) * rbg2.b);
 
-    console.log(r, g, b)
     return rgbToString(r,g,b);
 }

@@ -714,15 +714,22 @@ function render() {
 
         // move then check for collision then move back?
         cameraSphere.position.set(0, 0, 0);
+        var cameraDirection = new THREE.Vector3(); // create once and reuse it!
+        camera.getWorldDirection(cameraDirection);
+        cameraDirection.normalize();
+        var pos = new THREE.Vector3();
+        pos.addVectors(cameraDirection, cameraSphere.position);
+        cameraSphere.lookAt(pos);
         cameraSphere.position.x += (-velo.x * deltaTime);
         cameraSphere.position.z += (-velo.z * deltaTime);
 
-        if (!isTreeCollision() && !isBorderCollision()) {
-            controls.moveRight(-velo.x * deltaTime);
-            controls.moveForward(-velo.z * deltaTime);
+
+        if (isTreeCollision() || isBorderCollision()) {
+            console.log('colliding with a tree trunk');
         }
         else {
-            console.log('colliding with a tree trunk');
+            controls.moveRight(-velo.x * deltaTime);
+            controls.moveForward(-velo.z * deltaTime);
         }
 
 

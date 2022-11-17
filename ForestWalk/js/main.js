@@ -164,34 +164,49 @@ function initGraphics() {
     // generate trees (10 of 3 different types)
     // allow trees to cast shadows
     for (let i = 0; i < 10; i++) {
-
+        let x = 64;
+        let z = 64;
         let t = generateTrinaryTree(5);
         t.castShadow = true;
-        let x = Math.random() * 125 + 2;
-        let z = Math.random() * 125 + 2;
+        while (x > 60 && x < 68) {
+            x = Math.random() * 125 + 2;
+        }
+        while (z > 60 && z < 68) {
+            z = Math.random() * 125 + 2;
+        }
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-
+        scene.add(t);
         treeList.push(t);
     }
 
     for (let i = 0; i < 10; i++) {
-
+        let x = 64;
+        let z = 64;
         let t = generateBarnsleyTree(3);
         t.castShadow = true;
-        let x = Math.random() * 125 + 2;
-        let z = Math.random() * 125 + 2;
+        while (x > 60 && x < 68) {
+            x = Math.random() * 125 + 2;
+        }
+        while (z > 60 && z < 68) {
+            z = Math.random() * 125 + 2;
+        }
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-
+        scene.add(t);
         treeList.push(t);
 
     } for (let i = 0; i < 10; i++) {
-
+        let x = 64;
+        let z = 64;
         let t = generatePineTree(4);
         t.castShadow = true;
-        let x = Math.random() * 125 + 2;
-        let z = Math.random() * 125 + 2;
+        while (x > 60 && x < 68) {
+            x = Math.random() * 125 + 2;
+        }
+        while (z > 60 && z < 68) {
+            z = Math.random() * 125 + 2;
+        }
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 3, -z); //interpolate between values
-
+        scene.add(t);
         treeList.push(t);
     }
 
@@ -212,7 +227,7 @@ function initGraphics() {
     const cameraGeometry = new THREE.SphereGeometry(1);
     const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, });
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
-    scene.add(cameraSphere);
+    //scene.add(cameraSphere);
 
     camera.translateY(10);
 

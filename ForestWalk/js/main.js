@@ -2,7 +2,7 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControls';
 import { generateBarnsleyTree, generatePineTree, generateTrinaryTree } from './Trees';
-import { AmbientLight, BoxGeometry, EqualStencilFunc, Euler, Mesh, MeshStandardMaterial, Vector3 } from 'three';
+import { AmbientLight, BoxGeometry, EqualStencilFunc, Euler, Mesh, MeshStandardMaterial, PerspectiveCamera, Vector3 } from 'three';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -26,19 +26,18 @@ let skyBox;
 let reticle;
 let cameraSphere;
 let ambientLight;
+let superCamera; 
 
 //Colors for the sky background
 const sky_colors = {
     day: 0x87CEEB,
-    sunset: 0xF4633C,
     night: 0x000000,
-    sunrise: 0xF4633C,
 }
 
 //Colors for sun to interpolate between
 const sun_colors = {
-    min: 0xDD6E0F,
-    max: 0xfdfbd3
+    sunset: 0xF4633C,
+    day: 0xfdfbd3
 }
 
 const cycle_per_sec = ((15 * (Math.PI / 180)) / 10);
@@ -150,6 +149,10 @@ function initGraphics() {
     // clock
     clock = new THREE.Clock();
 
+    superCamera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
+    superCamera.position.set(64, 100, -64);
+    superCamera.lookAt(new Vector3(64,0,-64));
+    scene.add(superCamera);
     // initialize terrain
     initTerrain();
 
@@ -168,7 +171,7 @@ function initGraphics() {
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-        scene.add(t);
+        //scene.add(t);
         treeList.push(t);
     }
 
@@ -179,7 +182,7 @@ function initGraphics() {
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-        scene.add(t);
+        //scene.add(t);
         treeList.push(t);
 
     } for (let i = 0; i < 10; i++) {
@@ -189,7 +192,7 @@ function initGraphics() {
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 3, -z); //interpolate between values
-        scene.add(t);
+        //scene.add(t);
         treeList.push(t);
     }
 
@@ -661,33 +664,57 @@ function updateSkySystem(deltaTime) {
     let sunPos = Math.sin(skySystem.rotation.z);
     let cycleSide = Math.cos(skySystem.rotation.z);
 
-    if (sunPos >= 0.1) {
+    if (sunPos >= 0.3) { //day
         sunLight.intensity = 1.5;
-        sunLight.color = new THREE.Color(sun_colors.max);
+        sunLight.color = new THREE.Color(sun_colors.day);
         moonLight.intensity = 0.0;
         ambientLight.intensity = 0.1;
         skyBox.material.color = new THREE.Color(sky_colors.day);
     }
-    else if (sunPos >= 0 && cycleSide < 0) {
-        sunLight.color = new THREE.Color(weightColors(sunPos / 0.1, sun_colors.max, sun_colors.min));
-        //skyBox.material.color = new THREE.Color(weightColors(sunPos / 0.1, sky_colors.day, sky_colors.sunset));
+    else if (sunPos >= -0.2 && cycleSide < 0) { //day into sunset
+
+        let interval = 0.5;
+        let t = (sunPos + 0.2) / interval
+        console.log(t);
+
+        sunLight.color = new THREE.Color(weightColors(t, sun_colors.day, sun_colors.sunset));
+        skyBox.material.color = new THREE.Color(weightColors(t, sky_colors.day, sky_colors.night));
+
+        if (sunPos < 0)  //sunset into night
+        {
+            let t = (0.2 + sunPos) / 0.2
+            sunLight.intensity = 1.5 * t;
+            moonLight.intensity = 0.5 * (1 - t);
+            ambientLight.intensity = 0.1 * (1 - t);
+        }
+
     }
-    else if (sunPos >= -0.1 && cycleSide < 0) {
-        skyBox.material.color = new THREE.Color(weightColors(Math.abs(sunPos) / 0.1, sky_colors.night, sky_colors.day));
-    }
-    else if (sunPos < -0.1) {
+    else if (sunPos < -0.2) { //night
         sunLight.intensity = 0;
         moonLight.intensity = 0.5;
         ambientLight.intensity = 0.0;
         skyBox.material.color = new THREE.Color(sky_colors.night);
     }
-    else if (sunPos >= -0.1 && cycleSide > 0) {
-        skyBox.material.color = new THREE.Color(weightColors(Math.abs(sunPos) / 0.1, sky_colors.night, sky_colors.sunset));
+
+    else if (sunPos >= -0.2 && cycleSide > 0) { //day into sunset
+
+        let interval = 0.5;
+        let t = (sunPos + 0.2) / interval
+        console.log(t);
+
+        sunLight.color = new THREE.Color(weightColors(t, sun_colors.day, sun_colors.sunset));
+        skyBox.material.color = new THREE.Color(weightColors(t, sky_colors.day, sky_colors.night));
+
+        if (sunPos < 0)  //sunset into night
+        {
+            let t = (Math.abs(sunPos)) / 0.2
+            sunLight.intensity = 1.5 * (1 - t);
+            moonLight.intensity = 0.5 * t;
+            ambientLight.intensity = 0.1 * t;
+        }
+
     }
-    else if (sunPos >= 0 && cycleSide > 0) {
-        sunLight.color = new THREE.Color(weightColors(sunPos / 0.1, sun_colors.max, sun_colors.min));
-        skyBox.material.color = new THREE.Color(weightColors(sunPos / 0.1, sky_colors.day, sky_colors.sunset));
-    }
+
 
 }
 
@@ -713,14 +740,17 @@ function render() {
         if (left || right) velo.x += direction.x * 100.0 * deltaTime;
 
         let d = new THREE.Vector3();
-        controls.getDirection(d);
+
+        controls.getDirection(d);  
+
         d.y = 0;
-
+        
         d.x = d.x * direction.z + d.z * direction.x ;
-        d.z = d.x * -direction.x + d.z * direction.z ;
+        d.z = d.x * direction.x + d.z * direction.z ;
 
-        d.multiplyScalar(2);
-        console.log(d);
+        console.log(direction);
+        
+        d.multiplyScalar(3);
 
         cameraSphere.position.set(camera.position.x, camera.position.y, camera.position.z); //set pos to 0 every time
         cameraSphere.position.addVectors(cameraSphere.position, d); //switch velo to direction and it should work perfectly

@@ -715,7 +715,11 @@ function render() {
         let d = new THREE.Vector3();
         controls.getDirection(d);
         d.y = 0;
-        d.multiplyScalar(5);
+
+        d.x = d.x * direction.z + d.z * direction.x ;
+        d.z = d.x * -direction.x + d.z * direction.z ;
+
+        d.multiplyScalar(2);
         console.log(d);
 
         cameraSphere.position.set(camera.position.x, camera.position.y, camera.position.z); //set pos to 0 every time

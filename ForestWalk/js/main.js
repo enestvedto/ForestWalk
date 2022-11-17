@@ -1,8 +1,8 @@
 import '../style.css';
 import * as THREE from 'three';
-import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { PointerLockControls } from './PointerLockControls';
 import { generateBarnsleyTree, generatePineTree, generateTrinaryTree } from './Trees';
-import { AmbientLight, BoxGeometry, EqualStencilFunc, Mesh, MeshStandardMaterial } from 'three';
+import { AmbientLight, BoxGeometry, EqualStencilFunc, Euler, Mesh, MeshStandardMaterial, Vector3 } from 'three';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
@@ -207,10 +207,10 @@ function initGraphics() {
     clock = new THREE.Clock();
 
     // camera sphere
-    const cameraGeometry = new THREE.SphereGeometry(2);
+    const cameraGeometry = new THREE.SphereGeometry(1);
     const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, });
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
-    camera.add(cameraSphere);
+    scene.add(cameraSphere);
 
     camera.translateY(10);
 
@@ -235,7 +235,7 @@ function initBorder() {
     wall2.translateY(10);
     //scene.add(wall2);
     wall3.translateX(129 / 2);
-    wall3.translateZ(-128);
+    wall3.translateZ(-128);PointerLockControls
     wall3.translateY(10);
     //scene.add(wall3);
     wall4.rotation.set(0, Math.PI / 2, 0);
@@ -709,19 +709,26 @@ function render() {
         direction.x = Number(right) - Number(left);
         direction.normalize();
 
-        if (forward || back) velo.z -= direction.z * 100.0 * deltaTime;
-        if (left || right) velo.x -= direction.x * 100.0 * deltaTime;
+        if (forward || back) velo.z += direction.z * 100.0 * deltaTime;
+        if (left || right) velo.x += direction.x * 100.0 * deltaTime;
 
-        cameraSphere.position.set(0,0,0); //set pos to 0 every time
-        cameraSphere.position.addVectors(cameraSphere.position, velo); //switch velo to direction and it should work perfectly
+        let d = new THREE.Vector3();
+        controls.getDirection(d);
+        d.y = 0;
+        d.multiplyScalar(5);
+        console.log(d);
+
+        cameraSphere.position.set(camera.position.x, camera.position.y, camera.position.z); //set pos to 0 every time
+        cameraSphere.position.addVectors(cameraSphere.position, d); //switch velo to direction and it should work perfectly
         //^^ basically take sphere and add the direction to see the next step
+
 
         if (isTreeCollision() || isBorderCollision()) {
             console.log('colliding with a tree trunk');
         }
         else {
-            controls.moveRight(-velo.x * deltaTime);
-            controls.moveForward(-velo.z * deltaTime);
+            controls.moveRight(velo.x * deltaTime);
+            controls.moveForward(velo.z * deltaTime);
         }
 
 

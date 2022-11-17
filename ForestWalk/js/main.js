@@ -712,11 +712,9 @@ function render() {
         if (forward || back) velo.z -= direction.z * 100.0 * deltaTime;
         if (left || right) velo.x -= direction.x * 100.0 * deltaTime;
 
-        cameraSphere.position.set(0,0,0);
-
-        cameraSphere.position.addVectors(cameraSphere.position, velo);
-
-        console.log(cameraSphere.position);
+        cameraSphere.position.set(0,0,0); //set pos to 0 every time
+        cameraSphere.position.addVectors(cameraSphere.position, velo); //switch velo to direction and it should work perfectly
+        //^^ basically take sphere and add the direction to see the next step
 
         if (isTreeCollision() || isBorderCollision()) {
             console.log('colliding with a tree trunk');

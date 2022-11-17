@@ -208,7 +208,7 @@ function initGraphics() {
 
     // camera sphere
     const cameraGeometry = new THREE.SphereGeometry(2);
-    const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, });
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
     camera.add(cameraSphere);
 
@@ -712,17 +712,11 @@ function render() {
         if (forward || back) velo.z -= direction.z * 100.0 * deltaTime;
         if (left || right) velo.x -= direction.x * 100.0 * deltaTime;
 
-        // move then check for collision then move back?
-        cameraSphere.position.set(0, 0, 0);
-        var cameraDirection = new THREE.Vector3(); // create once and reuse it!
-        camera.getWorldDirection(cameraDirection);
-        cameraDirection.normalize();
-        var pos = new THREE.Vector3();
-        pos.addVectors(cameraDirection, cameraSphere.position);
-        cameraSphere.lookAt(pos);
-        cameraSphere.position.x += (-velo.x * deltaTime);
-        cameraSphere.position.z += (-velo.z * deltaTime);
+        cameraSphere.position.set(0,0,0);
 
+        cameraSphere.position.addVectors(cameraSphere.position, velo);
+
+        console.log(cameraSphere.position);
 
         if (isTreeCollision() || isBorderCollision()) {
             console.log('colliding with a tree trunk');

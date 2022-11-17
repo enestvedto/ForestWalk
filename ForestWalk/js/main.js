@@ -26,7 +26,7 @@ let skyBox;
 let reticle;
 let cameraSphere;
 let ambientLight;
-let superCamera; 
+let superCamera;
 
 //Colors for the sky background
 const sky_colors = {
@@ -79,9 +79,6 @@ function initGraphics() {
     //Scene
     scene = new THREE.Scene();
 
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
-
 
     //Camera
     camera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
@@ -125,7 +122,7 @@ function initGraphics() {
     skySystem.position.set(64, 0, -64);
     skySystem.scale.set(200, 200, 200);
 
-    //Lights
+    //sun and moon lights
     sunLight = new THREE.PointLight(0xfdfbd3);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 4096;
@@ -151,8 +148,9 @@ function initGraphics() {
 
     superCamera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
     superCamera.position.set(64, 100, -64);
-    superCamera.lookAt(new Vector3(64,0,-64));
+    superCamera.lookAt(new Vector3(64, 0, -64));
     scene.add(superCamera);
+
     // initialize terrain
     initTerrain();
 
@@ -163,7 +161,8 @@ function initGraphics() {
     camera.add(reticle);
     reticle.position.set(0, 0, -.2);
 
-    //generate trees
+    // generate trees (10 of 3 different types)
+    // allow trees to cast shadows
     for (let i = 0; i < 10; i++) {
 
         let t = generateTrinaryTree(5);
@@ -171,7 +170,7 @@ function initGraphics() {
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-        //scene.add(t);
+
         treeList.push(t);
     }
 
@@ -182,7 +181,7 @@ function initGraphics() {
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-        //scene.add(t);
+
         treeList.push(t);
 
     } for (let i = 0; i < 10; i++) {
@@ -192,7 +191,7 @@ function initGraphics() {
         let x = Math.random() * 125 + 2;
         let z = Math.random() * 125 + 2;
         t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 3, -z); //interpolate between values
-        //scene.add(t);
+
         treeList.push(t);
     }
 
@@ -217,11 +216,11 @@ function initGraphics() {
 
     camera.translateY(10);
 
-    // random shapes for raycaxst detection
-
-
 } //end of initGraphics
 
+/**
+ * this function generates an invisible border around the edge of the terrain
+ */
 function initBorder() {
     // add walls
     const wallGeometry = new THREE.PlaneGeometry(129, 20);
@@ -230,29 +229,33 @@ function initBorder() {
     const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
     const wall3 = new THREE.Mesh(wallGeometry, wallMaterial);
     const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
+
     wall1.translateX(129 / 2);
     wall1.translateY(10);
-    //scene.add(wall1);
+
     wall2.rotation.set(0, Math.PI / 2, 0);
     wall2.translateX(129 / 2);
     wall2.translateY(10);
-    //scene.add(wall2);
+
     wall3.translateX(129 / 2);
-    wall3.translateZ(-128);PointerLockControls
+    wall3.translateZ(-128); PointerLockControls
     wall3.translateY(10);
-    //scene.add(wall3);
+
     wall4.rotation.set(0, Math.PI / 2, 0);
     wall4.translateZ(128);
     wall4.translateX(129 / 2);
     wall4.translateY(10);
-    //scene.add(wall4);
 
     wallList.push(wall1);
     wallList.push(wall2);
     wallList.push(wall3);
     wallList.push(wall4);
-}
+} // end of initBorder
 
+/**
+ * This function initializes controls which allow the user to move with WASD, as well
+ * as hide the mouse pointer.
+ */
 function initControls() {
 
     controls = new PointerLockControls(camera, document.body);
@@ -319,7 +322,9 @@ function initControls() {
     };
 } //end of initControls
 
-// function to populate array
+/**
+ * This function is used to populate a height map given 4 corner values and a center value
+*/
 function heightField(topRow, bottomRow, leftColumn, rightColumn) {
     var topLeft = heightMap[leftColumn][topRow];
     var topRight = heightMap[rightColumn][topRow];
@@ -360,7 +365,10 @@ function heightField(topRow, bottomRow, leftColumn, rightColumn) {
 } // end of heighField
 
 
-// function to smooth a generated terrain
+/**
+ * this function smooths a height map by replacing each height with the average of itself and the 
+ * eight (if defined) surrounding heights
+ */
 function smoothField() {
     // make sure every edge of the terrain is on y level of 0
     for (var i = 0; i < smoothMap.length; i++) {
@@ -453,14 +461,23 @@ function smoothField() {
 } // end of smoothField
 
 
-// function to smooth a terrain 'x' number of times
+/**
+ * This function more easily calls the smooth terrain function multiple times
+ * 
+ * @param smoothingIterations the number of times to call the smoothField function
+ */
 function smoothTerrain(smoothingIterations) {
     for (let i = 0; i < smoothingIterations; i++) {
         smoothField();
     }
 } // end of smoothTerrain
 
-
+/**
+ * This function builds a terrain by creating and populating a height map. Then it randomly
+ * creates hills and valleys around the terrain at random heights. It continually smoothes the 
+ * map at each step to reach a more realistic looking terrain. It then generates a fractal terrain
+ * based off of the height map and turns it into an object, while giving it a texture.
+ */
 function initTerrain() {
     // make matrix of 2^k+1 by 2^k+1
     heightMap = new Array(width);
@@ -542,6 +559,8 @@ function initTerrain() {
     var vertices = [];
     var uvs = [];
 
+    // create the array of vertices that the buffer geometry will use to create the mesh.
+    // also create the array of corresponding uv values to correctly format the texture
     for (let j = 0; j < width - 1; j++) {
         for (let i = 0; i < width - 1; i++) {
             // bottom right triangle
@@ -591,6 +610,7 @@ function initTerrain() {
     geometry.setAttribute('uv',
         new THREE.BufferAttribute(new Float32Array(uvs), 2));
 
+    // texture the terrain with repeating texture so it appears much higher resolution
     const dirtTexture = textureLoader.load('assets/dirt.jpeg', function (dirtTexture) {
         dirtTexture.wrapS = dirtTexture.wrapT = THREE.RepeatWrapping;
         dirtTexture.repeat.set(width, width);
@@ -604,7 +624,6 @@ function initTerrain() {
     groundTerrain.receiveShadow = true;
     scene.add(groundTerrain);
 
-
     // flip the terrain rightside up
     groundTerrain.rotation.set(-Math.PI / 2, 0, 0);
 
@@ -616,6 +635,10 @@ function initTerrain() {
 
 } // end of initTerrain
 
+/**
+ * the function determines if the user (camera) is colliding with any trees
+ * @returns if the user (camera) is colliding with any trees
+ */
 function isTreeCollision() {
     var collision = false;
     // check for collisions here
@@ -624,41 +647,47 @@ function isTreeCollision() {
         cameraSphere.updateMatrixWorld();
         var bb1 = cameraSphere.geometry.boundingBox.clone();
         bb1.applyMatrix4(cameraSphere.matrixWorld);
-        // if there is an intersection then refuse the size
+
         tree.children[0].geometry.computeBoundingBox();
         tree.children[0].updateMatrixWorld();
         var bb2 = tree.children[0].geometry.boundingBox.clone();
         bb2.applyMatrix4(tree.children[0].matrixWorld);
-        // if there is a collision, stop movement
+
         if (bb1.intersectsBox(bb2)) {
             collision = true;
         }
     });
     return collision;
-}
+} // end of isTreeCollision
 
+/**
+ * the function determines if the user (camera) is colliding with the invisible border
+ * @returns if the user (camera) is colliding with the border
+ */
 function isBorderCollision() {
     var collision = false;
-    // check for collisions here
+
     wallList.forEach(wall => {
         cameraSphere.geometry.computeBoundingBox();
         cameraSphere.updateMatrixWorld();
         var bb1 = cameraSphere.geometry.boundingBox.clone();
         bb1.applyMatrix4(cameraSphere.matrixWorld);
-        // if there is an intersection then refuse the size
+
         wall.geometry.computeBoundingBox();
         wall.updateMatrixWorld();
         var bb2 = wall.geometry.boundingBox.clone();
         bb2.applyMatrix4(wall.matrixWorld);
-        // if there is a collision, stop movement
+
         if (bb1.intersectsBox(bb2)) {
             collision = true;
         }
     });
     return collision;
-}
+} // end of isBorderCollision
 
-
+/**
+ * this function manages the sky system's (day/night) rotation, color, position, and intensity
+ */
 function updateSkySystem(deltaTime) {
     skySystem.rotation.z += deltaTime * 4 * cycle_per_sec;
     let sunPos = Math.sin(skySystem.rotation.z);
@@ -700,7 +729,6 @@ function updateSkySystem(deltaTime) {
 
         let interval = 0.5;
         let t = (sunPos + 0.2) / interval
-        console.log(t);
 
         sunLight.color = new THREE.Color(weightColors(t, sun_colors.day, sun_colors.sunset));
         skyBox.material.color = new THREE.Color(weightColors(t, sky_colors.day, sky_colors.night));
@@ -715,8 +743,7 @@ function updateSkySystem(deltaTime) {
 
     }
 
-
-}
+} // end of updateSkySystem
 
 /**
  * A basic render method, in case special steps
@@ -741,26 +768,20 @@ function render() {
 
         let d = new THREE.Vector3();
 
-        controls.getDirection(d);  
+        controls.getDirection(d);
 
         d.y = 0;
-        
-        d.x = d.x * direction.z + d.z * direction.x ;
-        d.z = d.x * direction.x + d.z * direction.z ;
 
-        console.log(direction);
-        
+        d.x = d.x * direction.z + d.z * direction.x;
+        d.z = d.x * direction.x + d.z * direction.z;
+
         d.multiplyScalar(3);
 
         cameraSphere.position.set(camera.position.x, camera.position.y, camera.position.z); //set pos to 0 every time
         cameraSphere.position.addVectors(cameraSphere.position, d); //switch velo to direction and it should work perfectly
         //^^ basically take sphere and add the direction to see the next step
 
-
-        if (isTreeCollision() || isBorderCollision()) {
-            console.log('colliding with a tree trunk');
-        }
-        else {
+        if (!isTreeCollision() || isBorderCollision()) {
             controls.moveRight(velo.x * deltaTime);
             controls.moveForward(velo.z * deltaTime);
         }
@@ -787,7 +808,7 @@ function render() {
             camera.translateY(velocity.y);
         }
 
-        // find intersections with trees
+        // find raycaster intersections with trees for highlighting
         var vector = new THREE.Vector3(0, 0, -1);
         vector = camera.localToWorld(vector);
         // make vector a unit vector with the same direction as the camera
@@ -803,6 +824,7 @@ function render() {
                 reticleTarget = tree;
             }
 
+            // reset the emissiveness if the reticle is not over the tree any longer
             if (!(tree.uuid == reticleTarget.uuid)) {
                 reticleTarget.children.forEach(element => {
                     let material = element.material;
@@ -812,6 +834,7 @@ function render() {
                 reticleTarget = tree;
             }
 
+            // if the reticle is over a tree, make it more emissive
             reticleTarget.children.forEach(element => {
                 let material = element.material;
                 material.emissive = new THREE.Color(0x444444);

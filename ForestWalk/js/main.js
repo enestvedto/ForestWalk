@@ -29,7 +29,8 @@ let skyBox;
 let reticle;
 let cameraSphere;
 let ambientLight;
-let superCamera;
+let char; //character to be used
+
 let bob = 0;
 let oldBob = 0;
 let yaw = new THREE.Euler(0, 0, 0);
@@ -155,11 +156,6 @@ function initGraphics() {
     // clock
     clock = new THREE.Clock();
 
-    superCamera = new THREE.PerspectiveCamera(35, walkCanvas.clientWidth / walkCanvas.clientHeight, 0.1, 3000);
-    superCamera.position.set(64, 100, -64);
-    superCamera.lookAt(new Vector3(64, 0, -64));
-    scene.add(superCamera);
-
     // initialize terrain
     initTerrain();
 
@@ -200,10 +196,10 @@ function initGraphics() {
 
     loader.load('../assets/Character.gltf', function (gltf) {
 
-        let char = gltf.scene.children[0];
+        char = gltf.scene.children[0];
         char.castShadow = true;
         char.position.z = 3;
-        camera.add(char);
+        scene.add(char);
 
     }, undefined, function (error) {
 
@@ -226,7 +222,6 @@ function initGraphics() {
     const cameraGeometry = new THREE.SphereGeometry(1);
     const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, });
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
-    scene.add(cameraSphere);
 
     camera.translateY(10);
 
@@ -809,21 +804,20 @@ function render() {
         if (forward || back) velo.z += direction.z * 100.0 * deltaTime;
         if (left || right) velo.x += direction.x * 100.0 * deltaTime;
 
-        //let direction = new THREE.Euler(, 0, )
-
         direction.z = -direction.z;
         direction.applyEuler(yaw);
-        direction.multiplyScalar(3);
 
         cameraSphere.position.set(camera.position.x, camera.position.y, camera.position.z); //set pos to 0 every time
         cameraSphere.position.addVectors(cameraSphere.position, direction); //switch velo to direction and it should work perfectly
         //^^ basically take sphere and add the direction to see the next step
 
-        if (!isTreeCollision() && !isBorderCollision()) {
-            controls.moveRight(velo.x * deltaTime);
-            controls.moveForward(velo.z * deltaTime);
-        }
+        //place character behind camera for shadows
+        direction.set(0,0,0.5);
+        direction.applyEuler(yaw);
 
+        char.position.addVectors(camera.position, direction);
+        char.rotation.set(0,yaw.y,0);
+        console.log(char.position);
 
         // simulate walking on top of the terrain
         raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
@@ -853,7 +847,6 @@ function render() {
 
             camera.translateY(velocity.y);
         }
-
 
         // find raycaster intersections with trees for highlighting
         var vector = new THREE.Vector3(0, 0, -1);
@@ -894,6 +887,12 @@ function render() {
                     material.emissive = new THREE.Color(0x000000);
                 })
             }
+        }
+
+        //move character after raycast so it connects
+        if (!isTreeCollision() && !isBorderCollision()) {
+            controls.moveRight(velo.x * deltaTime);
+            controls.moveForward(velo.z * deltaTime);
         }
 
     }

@@ -2,12 +2,15 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControls';
 import { generateBarnsleyTree, generatePineTree, generateTrinaryTree } from './Trees';
-import { AmbientLight, BoxGeometry, EqualStencilFunc, Euler, Mesh, MeshStandardMaterial, PerspectiveCamera, Vector3 } from 'three';
+import { MeshStandardMaterial, Vector3 } from 'three';
+
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 //Dom elements
 let walkCanvas = document.getElementById('forest-walk');
 
 // Declare variables 
+const loader = new GLTFLoader();
 let scene;
 let clock;
 let camera;
@@ -127,12 +130,15 @@ function initGraphics() {
     //sun and moon lights
     sunLight = new THREE.PointLight(0xfdfbd3);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 4096;
-    sunLight.shadow.mapSize.height = 4096;
-    sun.add(sunLight);
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.position.x = 1;
+    skySystem.add(sunLight);
 
     moonLight = new THREE.PointLight(0xc2c5cc, 0.0);
-    moonLight.castShadow = true;
+    moonLight.castShadow = false;
+    moonLight.shadow.mapSize.width = 2048;
+    moonLight.shadow.mapSize.height = 2048;
     moon.add(moonLight);
 
     // ambient ight
@@ -188,6 +194,20 @@ function initGraphics() {
         scene.add(t);
     }
 
+    //Player Model
+    let loader = new GLTFLoader();
+
+    loader.load('../assets/Character.gltf', function (gltf) {
+  
+      let char = gltf.scene.children[0];
+      char.castShadow = true;
+      char.position.z = 1;
+      camera.add(char)
+      
+    },undefined, function (error) {
+
+        console.error(error);
+    });
 
     //Renderer
     renderer = new THREE.WebGLRenderer({
@@ -711,6 +731,7 @@ function updateSkySystem(deltaTime) {
         sunLight.intensity = 1.5;
         sunLight.color = new THREE.Color(sun_colors.day);
         moonLight.intensity = 0.0;
+        moonLight.castShadow = false;
         ambientLight.intensity = 0.1;
         skyBox.material.color = new THREE.Color(sky_colors.day);
     }
@@ -734,6 +755,8 @@ function updateSkySystem(deltaTime) {
     }
     else if (sunPos < -0.2) { //night
         sunLight.intensity = 0;
+        sunLight.castShadow = false;
+        moonLight.castShadow = true;
         moonLight.intensity = 0.5;
         ambientLight.intensity = 0.0;
         skyBox.material.color = new THREE.Color(sky_colors.night);

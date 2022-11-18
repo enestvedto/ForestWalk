@@ -1,5 +1,9 @@
 import * as THREE from 'three';
-import { BufferGeometry, Euler, Group, Line, LineSegments, Vector3 } from 'three';
+
+/**
+ * Tree Generation Code
+ * Author : Tone_Man (Tones)
+ */
 
 const branchDimension = {w: 0.5, h:2, d: 0.5}
 const branchGeometry = new THREE.BoxGeometry(branchDimension.w, branchDimension.h, branchDimension.d);
@@ -25,6 +29,13 @@ const pineLeafMaterial = new THREE.MeshStandardMaterial({
     color: 0x143306,
 });
 
+/**
+ * Creates a Stochastic Trinary Tree
+ * @param {Number} iteration - number of recusive steps
+ * @param {Number} angle - the degree of rotation that occurs on branches
+ * @param {String} axiom - the starting sequence for the tree to build off of
+ * @returns {THREE.Group} - a model of the tree
+ */
 function generateTrinaryTree(iteration, angle = (Math.PI / 5), axiom = '0') {
     const angleY = (2*Math.PI)/3;
     
@@ -34,6 +45,12 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 5), axiom = '0') {
     return buildTree(sequence, angle, angleY);
 }
 
+/**
+ * Generates the sequence for the Trinary Fractal
+ * @param {String} sequence - string of characters
+ * @param {Number} iteration - current iteration
+ * @returns 
+ */
 function generateTrinaryFractal(sequence, iteration) {
     if (iteration == 0) {
         return sequence;
@@ -95,6 +112,13 @@ function generateTrinaryFractal(sequence, iteration) {
     return generateTrinaryFractal(sequence, iteration);
 }
 
+/**
+ * Generates a Barnsley Tree
+ * @param {Number} iteration - number of recusive steps
+ * @param {Number} angle - the degree of rotation that occurs on branches
+ * @param {String} axiom - the starting sequence for the tree to build off of
+ * @returns {THREE.Group} - a model of the tree
+ */
 function generateBarnsleyTree(iterations, angle = 25 * (Math.PI / 180), axiom = 'X') {
     let sequence = generateBarnsleyFractal(axiom, iterations);
     console.log(sequence);
@@ -102,6 +126,12 @@ function generateBarnsleyTree(iterations, angle = 25 * (Math.PI / 180), axiom = 
     return buildTree(sequence, angle, Math.PI/2);
 }
 
+/**
+ * Generates the sequence for the BarnsleyFractal
+ * @param {String} sequence - string of characters
+ * @param {Number} iteration - current iteration
+ * @returns 
+ */
 function generateBarnsleyFractal(sequence, iteration) {
     if (iteration == 0) {
         return sequence;
@@ -144,6 +174,13 @@ function generateBarnsleyFractal(sequence, iteration) {
     return generateBarnsleyFractal(sequence, iteration);
 }
 
+/**
+ * Genertates a Pine Tree 
+ * @param {Number} iteration - number of recusive steps
+ * @param {Number} angle - the degree of rotation that occurs on branches
+ * @param {String} axiom - the starting sequence for the tree to build off of
+ * @returns {THREE.Group} - a model of the tree
+ */
 function generatePineTree(iterations, angle = 5 * (Math.PI / 180), axiom = '0')
 {
     let sequence = generatePineFractal(axiom, iterations);
@@ -152,6 +189,12 @@ function generatePineTree(iterations, angle = 5 * (Math.PI / 180), axiom = '0')
     return buildTree(sequence, angle, angle, pineDimension, pineLeafDimension, pineGeometry, pineMaterial, pineLeafGeometry, pineLeafMaterial, 1.5, 0.9);
 }
 
+/**
+ * Generates the sequence for the Pine Fractal
+ * @param {String} sequence - string of characters
+ * @param {Number} iteration - current iteration
+ * @returns 
+ */
 function generatePineFractal(sequence, iteration)
 {
     if (iteration == 0) {
@@ -199,6 +242,21 @@ function generatePineFractal(sequence, iteration)
     return generatePineFractal(sequence, iteration);
 }
 
+/**
+ * Builds a tree given paramters (THIS IS UGLY AND I SHOULD HAVE MADE A FACTORY AHHHHHHHHHHHHH)
+ * @param {*} sequence 
+ * @param {*} angleZ 
+ * @param {*} angleY 
+ * @param {*} branchDimensions 
+ * @param {*} leafDimensions 
+ * @param {*} bGeometry 
+ * @param {*} bMaterial 
+ * @param {*} lGeometry 
+ * @param {*} lMaterial 
+ * @param {*} scaleUp 
+ * @param {*} scaleDown 
+ * @returns 
+ */
 function buildTree(sequence, angleZ, angleY, 
     branchDimensions = branchDimension, leafDimensions = leafDimension, 
     bGeometry = branchGeometry, bMaterial = branchMaterial, 

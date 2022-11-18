@@ -27,6 +27,8 @@ let reticle;
 let cameraSphere;
 let ambientLight;
 let superCamera;
+let bob = 0;
+let oldBob = 0;
 
 //Colors for the sky background
 const sky_colors = {
@@ -177,7 +179,7 @@ function initGraphics() {
         treeList.push(t);
         placeTree(t);
         scene.add(t);
-    } 
+    }
     for (let i = 0; i < 15; i++) {
         let t = generatePineTree(Math.ceil(Math.random() * 2) + 2);
         t.castShadow = true;
@@ -210,17 +212,18 @@ function initGraphics() {
 } //end of initGraphics
 
 
-function placeTree(tree)
-{
+function placeTree(tree) {
     let x = 64;
     let z = 64;
 
-    while (x > 60 && x < 68 && z > 60 && z < 68) {
+    while (x > 61 && x < 67) {
         x = Math.random() * 125 + 2;
+    }
+    while (z > 61 && z < 67) {
         z = Math.random() * 125 + 2;
     }
 
-    let f_x = Math.floor(x); 
+    let f_x = Math.floor(x);
     let f_z = Math.floor(z);
     let c_x = Math.ceil(x);
     let c_z = Math.ceil(z);
@@ -803,8 +806,17 @@ function render() {
         distance = 2;
         var velocity = new THREE.Vector3();
         var intersects = raycaster.intersectObject(groundTerrain);
+
+        // plus bob head - extra credit!
+        bob += 0.02;
+        var newBob = Math.sin(bob);
+        var diff = newBob - oldBob;
+        distance += diff;
+        console.log(diff)
+        oldBob = diff;
+
         if (intersects.length > 0) {
-            var delta = distance - intersects[0].distance;
+            var delta = distance - intersects[0].distance
             //new position is higher so you need to move you object upwards
             if (distance >= intersects[0].distance) {
                 camera.position.y += (delta);
@@ -818,6 +830,7 @@ function render() {
 
             camera.translateY(velocity.y);
         }
+
 
         // find raycaster intersections with trees for highlighting
         var vector = new THREE.Vector3(0, 0, -1);

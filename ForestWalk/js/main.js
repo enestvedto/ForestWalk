@@ -163,7 +163,7 @@ function initGraphics() {
 
     // generate trees (10 of 3 different types)
     // allow trees to cast shadows
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
         let t = generateTrinaryTree(5);
         t.castShadow = true;
         treeList.push(t);
@@ -171,14 +171,14 @@ function initGraphics() {
         scene.add(t);
     }
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
         let t = generateBarnsleyTree(3);
         t.castShadow = true;
         treeList.push(t);
         placeTree(t);
         scene.add(t);
     } 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
         let t = generatePineTree(4);
         t.castShadow = true;
         treeList.push(t);

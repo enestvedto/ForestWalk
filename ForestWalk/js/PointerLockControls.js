@@ -2,7 +2,6 @@ import {
 	Euler,
 	EventDispatcher,
 	Vector3,
-	Object3D
 } from 'three';
 
 const _euler = new Euler( 0, 0, 0, 'YXZ' );
@@ -13,6 +12,7 @@ const _lockEvent = { type: 'lock' };
 const _unlockEvent = { type: 'unlock' };
 
 const _PI_2 = Math.PI / 2;
+const yaw = new Euler(0,0,0);
 
 class PointerLockControls extends EventDispatcher {
 
@@ -22,6 +22,8 @@ class PointerLockControls extends EventDispatcher {
 
 		this.domElement = domElement;
 		this.isLocked = false;
+
+		camera.yaw = yaw.clone();
 
 		// Set to constrain the pitch of the camera
 		// Range is 0 to Math.PI radians
@@ -43,6 +45,9 @@ class PointerLockControls extends EventDispatcher {
 
 			_euler.y -= movementX * 0.002 * scope.pointerSpeed;
 			_euler.x -= movementY * 0.002 * scope.pointerSpeed;
+			yaw.y -= movementX * 0.002 * scope.pointerSpeed
+			camera.yaw = yaw.clone();
+
 
 			_euler.x = Math.max( _PI_2 - scope.maxPolarAngle, Math.min( _PI_2 - scope.minPolarAngle, _euler.x ) );
 

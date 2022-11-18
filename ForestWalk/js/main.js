@@ -2,7 +2,7 @@ import '../style.css';
 import * as THREE from 'three';
 import { PointerLockControls } from './PointerLockControls';
 import { generateBarnsleyTree, generatePineTree, generateTrinaryTree } from './Trees';
-import { MeshStandardMaterial, Vector3 } from 'three';
+import { Euler, MeshStandardMaterial, Vector3 } from 'three';
 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -32,6 +32,7 @@ let ambientLight;
 let superCamera;
 let bob = 0;
 let oldBob = 0;
+let yaw = new THREE.Euler(0,0,0);
 
 //Colors for the sky background
 const sky_colors = {
@@ -201,8 +202,8 @@ function initGraphics() {
   
       let char = gltf.scene.children[0];
       char.castShadow = true;
-      char.position.z = 1;
-      camera.add(char)
+      char.position.z = 3;
+      camera.add(char);
       
     },undefined, function (error) {
 
@@ -225,7 +226,7 @@ function initGraphics() {
     const cameraGeometry = new THREE.SphereGeometry(1);
     const cameraMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, });
     cameraSphere = new THREE.Mesh(cameraGeometry, cameraMaterial);
-    //scene.add(cameraSphere);
+    scene.add(cameraSphere);
 
     camera.translateY(10);
 
@@ -312,6 +313,10 @@ function initControls() {
         instructions.style.display = '';
         move = false;
     });
+
+    controls.addEventListener('change', function(e) {
+        yaw = camera.yaw
+    })
 
     document.onkeydown = function (e) {
         switch (e.key) {
@@ -681,11 +686,14 @@ function isTreeCollision() {
         cameraSphere.updateMatrixWorld();
         var bb1 = cameraSphere.geometry.boundingBox.clone();
         bb1.applyMatrix4(cameraSphere.matrixWorld);
-
-        tree.children[0].geometry.computeBoundingBox();
-        tree.children[0].updateMatrixWorld();
-        var bb2 = tree.children[0].geometry.boundingBox.clone();
-        bb2.applyMatrix4(tree.children[0].matrixWorld);
+        
+        for( let i = 0; i < 2; i++)
+        {
+            tree.children[i].geometry.computeBoundingBox();
+            tree.children[i].updateMatrixWorld();
+            var bb2 = tree.children[i].geometry.boundingBox.clone();
+            bb2.applyMatrix4(tree.children[i].matrixWorld);
+        }
 
         if (bb1.intersectsBox(bb2)) {
             collision = true;
@@ -739,7 +747,6 @@ function updateSkySystem(deltaTime) {
 
         let interval = 0.5;
         let t = (sunPos + 0.2) / interval
-        console.log(t);
 
         sunLight.color = new THREE.Color(weightColors(t, sun_colors.day, sun_colors.sunset));
         skyBox.material.color = new THREE.Color(weightColors(t, sky_colors.day, sky_colors.night));
@@ -803,19 +810,14 @@ function render() {
         if (forward || back) velo.z += direction.z * 100.0 * deltaTime;
         if (left || right) velo.x += direction.x * 100.0 * deltaTime;
 
-        let d = new THREE.Vector3();
+        //let direction = new THREE.Euler(, 0, )
 
-        controls.getDirection(d);
-
-        d.y = 0;
-
-        d.x = d.x * direction.z + d.z * direction.x;
-        d.z = d.x * direction.x + d.z * direction.z;
-
-        d.multiplyScalar(3);
+        direction.z = -direction.z;
+        direction.applyEuler(yaw);
+        direction.multiplyScalar(3);
 
         cameraSphere.position.set(camera.position.x, camera.position.y, camera.position.z); //set pos to 0 every time
-        cameraSphere.position.addVectors(cameraSphere.position, d); //switch velo to direction and it should work perfectly
+        cameraSphere.position.addVectors(cameraSphere.position, direction); //switch velo to direction and it should work perfectly
         //^^ basically take sphere and add the direction to see the next step
 
         if (!isTreeCollision() || isBorderCollision()) {
@@ -835,7 +837,6 @@ function render() {
         var newBob = Math.sin(bob);
         var diff = newBob - oldBob;
         distance += diff;
-        console.log(diff)
         oldBob = diff;
 
         if (intersects.length > 0) {
@@ -998,7 +999,6 @@ function interpolate(unknown, data) {
     let result = 0;
 
     for (let i = 0; i < distances.length; i++) {
-        console.log(data[i * 2]);
         result += smoothMap[data[i * 2]][data[i * 2 + 1]] * (distances[i]);
     }
 

@@ -40,7 +40,6 @@ function generateTrinaryTree(iteration, angle = (Math.PI / 5), axiom = '0') {
     const angleY = (2*Math.PI)/3;
     
     let sequence = generateTrinaryFractal(axiom, iteration);
-    console.log(sequence);
 
     return buildTree(sequence, angle, angleY);
 }
@@ -121,7 +120,6 @@ function generateTrinaryFractal(sequence, iteration) {
  */
 function generateBarnsleyTree(iterations, angle = 25 * (Math.PI / 180), axiom = 'X') {
     let sequence = generateBarnsleyFractal(axiom, iterations);
-    console.log(sequence);
 
     return buildTree(sequence, angle, Math.PI/2);
 }
@@ -184,7 +182,6 @@ function generateBarnsleyFractal(sequence, iteration) {
 function generatePineTree(iterations, angle = 5 * (Math.PI / 180), axiom = '0')
 {
     let sequence = generatePineFractal(axiom, iterations);
-    console.log(sequence);
 
     return buildTree(sequence, angle, angle, pineDimension, pineLeafDimension, pineGeometry, pineMaterial, pineLeafGeometry, pineLeafMaterial, 1.5, 0.9);
 }

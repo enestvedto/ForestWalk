@@ -32,7 +32,7 @@ let ambientLight;
 let superCamera;
 let bob = 0;
 let oldBob = 0;
-let yaw = new THREE.Euler(0,0,0);
+let yaw = new THREE.Euler(0, 0, 0);
 
 //Colors for the sky background
 const sky_colors = {
@@ -199,13 +199,13 @@ function initGraphics() {
     let loader = new GLTFLoader();
 
     loader.load('../assets/Character.gltf', function (gltf) {
-  
-      let char = gltf.scene.children[0];
-      char.castShadow = true;
-      char.position.z = 3;
-      camera.add(char);
-      
-    },undefined, function (error) {
+
+        let char = gltf.scene.children[0];
+        char.castShadow = true;
+        char.position.z = 3;
+        camera.add(char);
+
+    }, undefined, function (error) {
 
         console.error(error);
     });
@@ -249,7 +249,7 @@ function placeTree(tree) {
     let c_x = Math.ceil(x);
     let c_z = Math.ceil(z);
 
-    let y = interpolate([x, z],[f_x, f_z, f_x, c_z, c_x, f_z, c_x, c_z] ) //since we padded random gen we dont need edge cases
+    let y = interpolate([x, z], [f_x, f_z, f_x, c_z, c_x, f_z, c_x, c_z]) //since we padded random gen we dont need edge cases
     tree.position.set(x, y - 2.5, -z);
 
 }
@@ -314,7 +314,7 @@ function initControls() {
         move = false;
     });
 
-    controls.addEventListener('change', function(e) {
+    controls.addEventListener('change', function (e) {
         yaw = camera.yaw
     })
 
@@ -686,9 +686,8 @@ function isTreeCollision() {
         cameraSphere.updateMatrixWorld();
         var bb1 = cameraSphere.geometry.boundingBox.clone();
         bb1.applyMatrix4(cameraSphere.matrixWorld);
-        
-        for( let i = 0; i < 2; i++)
-        {
+
+        for (let i = 0; i < 2; i++) {
             tree.children[i].geometry.computeBoundingBox();
             tree.children[i].updateMatrixWorld();
             var bb2 = tree.children[i].geometry.boundingBox.clone();
@@ -820,7 +819,7 @@ function render() {
         cameraSphere.position.addVectors(cameraSphere.position, direction); //switch velo to direction and it should work perfectly
         //^^ basically take sphere and add the direction to see the next step
 
-        if (!isTreeCollision() || isBorderCollision()) {
+        if (!isTreeCollision() && !isBorderCollision()) {
             controls.moveRight(velo.x * deltaTime);
             controls.moveForward(velo.z * deltaTime);
         }

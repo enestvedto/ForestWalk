@@ -165,51 +165,27 @@ function initGraphics() {
 
     // generate trees (10 of 3 different types)
     // allow trees to cast shadows
-    for (let i = 0; i < 10; i++) {
-        let x = 64;
-        let z = 64;
+    for (let i = 0; i < 15; i++) {
         let t = generateTrinaryTree(5);
         t.castShadow = true;
-        while (x > 60 && x < 68) {
-            x = Math.random() * 125 + 2;
-        }
-        while (z > 60 && z < 68) {
-            z = Math.random() * 125 + 2;
-        }
-        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-        scene.add(t);
         treeList.push(t);
+        placeTree(t);
+        scene.add(t);
     }
 
-    for (let i = 0; i < 10; i++) {
-        let x = 64;
-        let z = 64;
+    for (let i = 0; i < 15; i++) {
         let t = generateBarnsleyTree(3);
         t.castShadow = true;
-        while (x > 60 && x < 68) {
-            x = Math.random() * 125 + 2;
-        }
-        while (z > 60 && z < 68) {
-            z = Math.random() * 125 + 2;
-        }
-        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 1.5, -z);
-        scene.add(t);
         treeList.push(t);
-
-    } for (let i = 0; i < 10; i++) {
-        let x = 64;
-        let z = 64;
+        placeTree(t);
+        scene.add(t);
+    } 
+    for (let i = 0; i < 15; i++) {
         let t = generatePineTree(4);
         t.castShadow = true;
-        while (x > 60 && x < 68) {
-            x = Math.random() * 125 + 2;
-        }
-        while (z > 60 && z < 68) {
-            z = Math.random() * 125 + 2;
-        }
-        t.position.set(x, smoothMap[Math.floor(x)][Math.floor(z)] - 3, -z); //interpolate between values
-        scene.add(t);
         treeList.push(t);
+        placeTree(t);
+        scene.add(t);
     }
 
 
@@ -235,6 +211,26 @@ function initGraphics() {
 
 } //end of initGraphics
 
+
+function placeTree(tree)
+{
+    let x = 64;
+    let z = 64;
+
+    while (x > 60 && x < 68 && z > 60 && z < 68) {
+        x = Math.random() * 125 + 2;
+        z = Math.random() * 125 + 2;
+    }
+
+    let f_x = Math.floor(x); 
+    let f_z = Math.floor(z);
+    let c_x = Math.ceil(x);
+    let c_z = Math.ceil(z);
+
+    let y = interpolate([x, z],[f_x, f_z, f_x, c_z, c_x, f_z, c_x, c_z] ) //since we padded random gen we dont need edge cases
+    tree.position.set(x, y - 2, -z);
+
+}
 /**
  * this function generates an invisible border around the edge of the terrain
  */
@@ -706,7 +702,7 @@ function isBorderCollision() {
  * this function manages the sky system's (day/night) rotation, color, position, and intensity
  */
 function updateSkySystem(deltaTime) {
-    skySystem.rotation.z += deltaTime * 4 * cycle_per_sec;
+    skySystem.rotation.z += deltaTime * cycle_per_sec;
     let sunPos = Math.sin(skySystem.rotation.z);
     let cycleSide = Math.cos(skySystem.rotation.z);
 
@@ -889,10 +885,22 @@ function getRndInteger(min, max) {
 
 main();
 
+/**
+ * Takes rbg values and converts them to a string usable by THREE.js
+ * @param {Number} r - red
+ * @param {Number} g - blue
+ * @param {Number} b  - green
+ * @returns 
+ */
 function rgbToString(r, g, b) {
     return "rgb(" + r + "," + g + "," + b + ")";
 }
 
+/**
+ * Takes hex values and decodes it into rgb
+ * @param {Hexidecimal} hex 
+ * @returns 
+ */
 function hexToRgb(hex) {
     hex = Math.floor(hex);
 
@@ -903,13 +911,72 @@ function hexToRgb(hex) {
     }
 }
 
-function weightColors(sunPos, hex1, hex2) {
+/**
+ * Creates a linear interpolation from hex1 to hex2
+ * @param {Number} progress state of transition from 0 to 1
+ * @param {Number} hex1 color at progress 0
+ * @param {Number} hex2 color at progress 1
+ * @returns {string} rgbString for THREE.js
+ */
+function weightColors(progress, hex1, hex2) {
     let rgb1 = hexToRgb(hex1);
     let rbg2 = hexToRgb(hex2);
 
-    let r = Math.floor(sunPos * rgb1.r + (1 - sunPos) * rbg2.r);
-    let g = Math.floor(sunPos * rgb1.g + (1 - sunPos) * rbg2.g);
-    let b = Math.floor(sunPos * rgb1.b + (1 - sunPos) * rbg2.b);
+    let r = Math.floor(progress * rgb1.r + (1 - progress) * rbg2.r);
+    let g = Math.floor(progress * rgb1.g + (1 - progress) * rbg2.g);
+    let b = Math.floor(progress * rgb1.b + (1 - progress) * rbg2.b);
 
     return rgbToString(r, g, b);
+}
+
+/**
+ * Interpolates point given data
+ * @param {*} unknown 
+ * @param {*} data 
+ * @returns 
+ */
+function interpolate(unknown, data) {
+
+    let distances = []
+
+    //get distance
+    for (let i = 0; i < data.length; i += 2) {
+        let distance = Math.sqrt(Math.pow(data[i] - unknown[0], 2) + Math.pow(data[i + 1] - unknown[1], 2));
+        distances.push(distance)
+    }
+
+    //weight by distance to point
+
+    let sum = 0;
+
+    for (let i = 0; i < distances.length; i++) {
+        sum += distances[i]
+    }
+
+    for (let i = 0; i < distances.length; i++) {
+        distances[i] = 1 - distances[i] / sum;
+    }
+
+    //correct inverse weights 
+
+    sum = 0;
+
+    for (let i = 0; i < distances.length; i++) {
+        sum += distances[i]
+    }
+
+    for (let i = 0; i < distances.length; i++) {
+        distances[i] = distances[i] / sum;
+    }
+
+    //calc amount
+
+    let result = 0;
+
+    for (let i = 0; i < distances.length; i++) {
+        console.log(data[i * 2]);
+        result += smoothMap[data[i * 2]][data[i * 2 + 1]] * (distances[i]);
+    }
+
+    return result;
 }

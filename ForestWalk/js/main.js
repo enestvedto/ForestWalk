@@ -179,7 +179,7 @@ function initGraphics() {
         treeList.push(t);
         placeTree(t);
         scene.add(t);
-    } 
+    }
     for (let i = 0; i < 15; i++) {
         let t = generatePineTree(4);
         t.castShadow = true;
@@ -212,22 +212,23 @@ function initGraphics() {
 } //end of initGraphics
 
 
-function placeTree(tree)
-{
+function placeTree(tree) {
     let x = 64;
     let z = 64;
 
-    while (x > 60 && x < 68 && z > 60 && z < 68) {
+    while (x > 61 && x < 67) {
         x = Math.random() * 125 + 2;
+    }
+    while (z > 61 && z < 67) {
         z = Math.random() * 125 + 2;
     }
 
-    let f_x = Math.floor(x); 
+    let f_x = Math.floor(x);
     let f_z = Math.floor(z);
     let c_x = Math.ceil(x);
     let c_z = Math.ceil(z);
 
-    let y = interpolate([x, z],[f_x, f_z, f_x, c_z, c_x, f_z, c_x, c_z] ) //since we padded random gen we dont need edge cases
+    let y = interpolate([x, z], [f_x, f_z, f_x, c_z, c_x, f_z, c_x, c_z]) //since we padded random gen we dont need edge cases
     tree.position.set(x, y - 2, -z);
 
 }

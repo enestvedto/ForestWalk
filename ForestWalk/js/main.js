@@ -27,6 +27,8 @@ let reticle;
 let cameraSphere;
 let ambientLight;
 let superCamera;
+let bob = 0;
+let oldBob = 0;
 
 //Colors for the sky background
 const sky_colors = {
@@ -807,8 +809,17 @@ function render() {
         distance = 2;
         var velocity = new THREE.Vector3();
         var intersects = raycaster.intersectObject(groundTerrain);
+
+        // plus bob head - extra credit!
+        bob += 0.02;
+        var newBob = Math.sin(bob);
+        var diff = newBob - oldBob;
+        distance += diff;
+        console.log(diff)
+        oldBob = diff;
+
         if (intersects.length > 0) {
-            var delta = distance - intersects[0].distance;
+            var delta = distance - intersects[0].distance
             //new position is higher so you need to move you object upwards
             if (distance >= intersects[0].distance) {
                 camera.position.y += (delta);
@@ -822,6 +833,7 @@ function render() {
 
             camera.translateY(velocity.y);
         }
+
 
         // find raycaster intersections with trees for highlighting
         var vector = new THREE.Vector3(0, 0, -1);

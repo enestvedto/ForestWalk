@@ -163,7 +163,7 @@ function initGraphics() {
 
     // generate trees (10 of 3 different types)
     // allow trees to cast shadows
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 20; i++) {
         let t = generateTrinaryTree(5);
         t.castShadow = true;
         treeList.push(t);
@@ -171,7 +171,7 @@ function initGraphics() {
         scene.add(t);
     }
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 10; i++) {
         let t = generateBarnsleyTree(3);
         t.castShadow = true;
         treeList.push(t);
@@ -179,7 +179,7 @@ function initGraphics() {
         scene.add(t);
     } 
     for (let i = 0; i < 15; i++) {
-        let t = generatePineTree(4);
+        let t = generatePineTree(Math.ceil(Math.random() * 2) + 2);
         t.castShadow = true;
         treeList.push(t);
         placeTree(t);
@@ -226,7 +226,7 @@ function placeTree(tree)
     let c_z = Math.ceil(z);
 
     let y = interpolate([x, z],[f_x, f_z, f_x, c_z, c_x, f_z, c_x, c_z] ) //since we padded random gen we dont need edge cases
-    tree.position.set(x, y - 2, -z);
+    tree.position.set(x, y - 2.5, -z);
 
 }
 /**
